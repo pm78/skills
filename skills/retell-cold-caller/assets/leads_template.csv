@@ -1,0 +1,3 @@
+first_name,last_name,company,title,email,phone_e164,timezone,notes
+Marie,Durand,Example SAS,DRH,marie.durand@example.com,+33600000000,Europe/Paris,Prioriser un rappel matin
+Pierre,Martin,Acme France,Responsable RH,pierre.martin@example.com,+33600000001,Europe/Paris,Demande un email d'abord

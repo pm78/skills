@@ -1,0 +1,62 @@
+{
+  "presentation": {
+    "title": "AI Skills Presentation",
+    "author": "ContractScan Team",
+    "theme": "dark",
+    "slides": [
+      {
+        "id": 1,
+        "layout": "title",
+        "title": "Building Reusable AI Skills",
+        "subtitle": "A Complete Guide to Agent Skills Specification"
+      },
+      {
+        "id": 2,
+        "layout": "bullets",
+        "title": "Key Benefits",
+        "bullets": [
+          "Reusable across multiple AI agents and platforms",
+          "Standardized SKILL.md format for easy discovery",
+          "Easy to share in public repositories",
+          "Version control friendly with clear dependencies",
+          "Self-documenting with embedded usage examples"
+        ]
+      },
+      {
+        "id": 3,
+        "layout": "two-column",
+        "title": "Before vs After",
+        "left": "Manual PowerPoint Creation\n• Time-consuming process\n• Prone to formatting errors\n• Hard to automate\n• Inconsistent styling\n• No version control",
+        "right": "PPTX Generator Skill\n• Fully automated workflow\n• Consistent output every time\n• Repeatable process\n• Theme-based styling\n• JSON-driven specifications"
+      },
+      {
+        "id": 4,
+        "layout": "bullets",
+        "title": "Supported Slide Layouts",
+        "bullets": [
+          "title - Large centered title with subtitle",
+          "bullets - Title with bullet point list",
+          "two-column - Side-by-side comparison",
+          "chart - Native PowerPoint charts (editable)",
+          "workflow - Process diagram (editable shapes)",
+          "kpi-cards - KPI/metric cards (editable shapes)",
+          "image - Embed images or generate them with image_gen",
+          "blank - Minimal slide with optional title"
+        ]
+      },
+      {
+        "id": 5,
+        "layout": "two-column",
+        "title": "Theme Options",
+        "left": "Dark Theme\n• Slate-900 background\n• Cyan-400 accents\n• High contrast text\n• Modern, professional look\n• Easy on the eyes",
+        "right": "Light Theme\n• White background\n• Cyan-600 accents\n• Classic presentation style\n• Great for printing\n• Formal settings"
+      },
+      {
+        "id": 6,
+        "layout": "title",
+        "title": "Thank You!",
+        "subtitle": "Start building your own Agent Skills today"
+      }
+    ]
+  }
+}

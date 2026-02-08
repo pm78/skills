@@ -1,0 +1,53 @@
+{
+  "presentation": {
+    "title": "Charts & Images Demo",
+    "author": "ContractScan",
+    "slides": [
+      {
+        "id": 1,
+        "layout": "title",
+        "title": "Charts & Images in PPTX",
+        "subtitle": "Generated with Codex + python-pptx (Worldline template compatible)"
+      },
+      {
+        "id": 2,
+        "layout": "bullets",
+        "title": "What You Can Do",
+        "bullets": [
+          "Add native PowerPoint charts from JSON data",
+          "Embed images (local path, relative to config, or Windows paths on WSL)",
+          "Combine with the Worldline corporate template (`--theme template`)",
+          "Run `--qa` to auto-split dense slides after generation"
+        ]
+      },
+      {
+        "id": 3,
+        "layout": "chart",
+        "title": "Time to First Draft (Minutes)",
+        "chart_type": "column",
+        "categories": ["Manual", "Codex (JSON)", "Codex (QA loop)"],
+        "series": [
+          {
+            "name": "Typical",
+            "values": [120, 15, 20]
+          }
+        ],
+        "legend": false,
+        "style": 10
+      },
+      {
+        "id": 4,
+        "layout": "image",
+        "title": "Example Embedded Image",
+        "image_path": "sample-image.png",
+        "caption": "Tip: replace `sample-image.png` with your own diagram/screenshot."
+      },
+      {
+        "id": 5,
+        "layout": "title",
+        "title": "Next Step",
+        "subtitle": "Turn your narrative into a JSON slide spec, then iterate with QA + snapshots"
+      }
+    ]
+  }
+}

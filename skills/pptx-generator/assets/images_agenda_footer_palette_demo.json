@@ -1,0 +1,71 @@
+{
+  "presentation": {
+    "title": "Codex PPTX Generator (Worldline Demo)",
+    "author": "Codex",
+    "confidentiality": "INTERNAL",
+    "palette": {
+      "diagram": {
+        "fill": "BACKGROUND_1",
+        "line": "ACCENT_1",
+        "arrow": "ACCENT_1",
+        "text_primary": "TEXT_1",
+        "text_secondary": "TEXT_2"
+      },
+      "footer": {
+        "text": "TEXT_2",
+        "line": "ACCENT_1"
+      },
+      "image": {
+        "bg": "#FFFFFF",
+        "accent": "ACCENT_1",
+        "text": "TEXT_1"
+      }
+    },
+    "slides": [
+      {
+        "layout": "title",
+        "title": "How Codex Generates a Branded PowerPoint",
+        "subtitle": "Worldline template + agenda + footer + generated images"
+      },
+      {
+        "layout": "workflow",
+        "title": "Workflow: Prompt → PPTX",
+        "orientation": "horizontal",
+        "steps": [
+          { "title": "Outline", "subtitle": "Audience + story" },
+          { "title": "Draft JSON", "subtitle": "Slides + data" },
+          { "title": "Generate PPTX", "subtitle": "Apply template" },
+          { "title": "Export snapshots", "subtitle": "PNG/JPG (optional)" },
+          { "title": "QA loop", "subtitle": "Split dense slides" },
+          { "title": "Polish", "subtitle": "Ready to present" }
+        ]
+      },
+      {
+        "layout": "image",
+        "title": "Generated image (sketch)",
+        "caption": "Generated at runtime via Pillow (sketch mode), then embedded into the slide.",
+        "image_gen": {
+          "id": "sketch-hero",
+          "kind": "sketch",
+          "prompt": "Sketch: AI orchestration and governance",
+          "aspect_ratio": "16:9",
+          "long_side_px": 1600
+        }
+      },
+      {
+        "layout": "image",
+        "title": "Generated infographic (workflow image)",
+        "caption": "Workflow generated as an image (use editable shapes instead when you need PPT-native editing).",
+        "image_gen": {
+          "id": "workflow-infographic",
+          "kind": "workflow",
+          "prompt": "Infographic: Delivery pipeline",
+          "aspect_ratio": "8:9",
+          "long_side_px": 1200,
+          "steps": ["Discover", "Design", "Build", "Deploy"]
+        }
+      }
+    ]
+  }
+}
+

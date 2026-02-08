@@ -1,0 +1,144 @@
+{
+  "presentation": {
+    "title": "The AI-Native Organization",
+    "author": "ContractScan",
+    "slides": [
+      {
+        "id": 1,
+        "layout": "title",
+        "title": "The AI-Native Organization",
+        "subtitle": "Leadership, Orchestration, and the 2026 Workforce"
+      },
+      {
+        "id": 2,
+        "layout": "bullets",
+        "title": "Executive Summary",
+        "bullets": [
+          "AI-native organizations treat AI as a core operating system, not a bolt-on tool",
+          "Leaders shift from approving work to designing systems: objectives, guardrails, and feedback loops",
+          "Orchestration becomes the differentiator: humans + agents + tools working in governed workflows",
+          "The 2026 workforce rewards operators of AI: roles that blend domain expertise with evaluation and automation",
+          "Winning playbook: platform foundation, reusable workflows, measurable outcomes, disciplined risk controls"
+        ]
+      },
+      {
+        "id": 3,
+        "layout": "bullets",
+        "title": "Definition: AI-Native",
+        "bullets": [
+          "Work is expressed as workflows with clear inputs/outputs, tools, and tests",
+          "Knowledge is retrieved and grounded with traceability to sources",
+          "Quality is managed via evaluation: test sets, reviews, and monitoring",
+          "Security and compliance are designed in: PII, IP, access, and audit",
+          "People are trained to delegate safely and improve workflows continuously"
+        ]
+      },
+      {
+        "id": 4,
+        "layout": "two-column",
+        "title": "2026: Why Now",
+        "left": "Tech reality\n• Multimodal models + tool use mature\n• Lower cost per token + faster inference\n• Enterprise retrieval (RAG) is standard\n• Agent workflows normalize automation\n• Private deployment options widen",
+        "right": "Business reality\n• Talent constraints increase\n• Margin pressure forces productivity gains\n• Customer expectations: instant and personalized\n• Regulatory scrutiny increases (need auditability)\n• Advantage shifts to execution speed"
+      },
+      {
+        "id": 5,
+        "layout": "bullets",
+        "title": "Leadership Responsibilities",
+        "bullets": [
+          "Set the AI thesis: where AI changes the value chain and what good looks like",
+          "Fund a productized AI platform (data, identity, tooling, evaluation, monitoring)",
+          "Define decision rights: what AI can do autonomously vs what requires approval",
+          "Model adoption: leaders use AI in their own workflows and share patterns",
+          "Treat risk as an engineering problem: controls, testing, and incident response"
+        ]
+      },
+      {
+        "id": 6,
+        "layout": "two-column",
+        "title": "Orchestration Layer (The New Middle)",
+        "left": "Work orchestration\n• Task decomposition + routing\n• Human-in-the-loop checkpoints\n• SOPs as workflows\n• Continuous improvement via telemetry\n• Budgeting: time, cost, and latency",
+        "right": "Tech orchestration\n• Model selection + fallback\n• Retrieval + tool integrations\n• Prompt/workflow versioning\n• Evaluation gates in CI/CD\n• Observability: logs, traces, safety metrics"
+      },
+      {
+        "id": 7,
+        "layout": "bullets",
+        "title": "The AI Platform Stack",
+        "bullets": [
+          "Identity + access: least privilege for humans and agents",
+          "Data foundation: governed sources, metadata, and retrieval-ready content",
+          "Workflow runtime: orchestrator, tool registry, and connectors",
+          "Quality layer: evaluation harness, human review queues, and monitoring",
+          "Safety layer: policy enforcement, red-teaming, and audit trails"
+        ]
+      },
+      {
+        "id": 8,
+        "layout": "two-column",
+        "title": "Roles That Grow (2026)",
+        "left": "New / expanded roles\n• AI Product Owner\n• Workflow/Agent Engineer\n• Model Risk & Compliance Lead\n• AI Operations (AI-Ops)\n• Data Steward / Knowledge Curator",
+        "right": "How existing roles evolve\n• Analysts: from reporting to decision systems\n• Customer ops: from tickets to resolution flows\n• Engineers: from code to systems + evaluation\n• HR/L&D: from training to capability building\n• Legal: from review to governance playbooks"
+      },
+      {
+        "id": 9,
+        "layout": "bullets",
+        "title": "Manager as Orchestrator",
+        "bullets": [
+          "Design workflows and interfaces between people and agents",
+          "Define acceptance tests and escalation paths for edge cases",
+          "Coach teams on delegation, verification, and responsible use",
+          "Measure outcomes (quality, cycle time, cost) and remove bottlenecks",
+          "Build psychological safety: experimentation with guardrails"
+        ]
+      },
+      {
+        "id": 10,
+        "layout": "bullets",
+        "title": "Reskilling Priorities",
+        "bullets": [
+          "AI literacy: capabilities, limits, and failure modes",
+          "Workflow thinking: break work into steps with measurable outputs",
+          "Evaluation craft: write rubrics, create test sets, review systematically",
+          "Data judgment: source quality, bias, provenance, and privacy",
+          "Change leadership: adoption, incentives, and operating cadence"
+        ]
+      },
+      {
+        "id": 11,
+        "layout": "bullets",
+        "title": "Governance Without Killing Speed",
+        "bullets": [
+          "Tiered risk: low/medium/high use-cases with pre-approved patterns",
+          "Documented prompts/workflows with versioning and ownership",
+          "Evidence-first outputs: citations, confidence signals, and trace logs",
+          "Incident playbook: rollback, containment, communication, and learning",
+          "Vendor/model management: SLAs, privacy, and lifecycle controls"
+        ]
+      },
+      {
+        "id": 12,
+        "layout": "bullets",
+        "title": "Metrics That Matter",
+        "bullets": [
+          "Outcome cost: $/case resolved, $/proposal produced, $/decision supported",
+          "Cycle time and throughput: time-to-first-draft, time-to-resolution",
+          "Quality: defect rate, human override rate, customer satisfaction",
+          "Adoption: active users, workflows run, reuse rate of patterns",
+          "Risk: policy violations, data exposure incidents, audit findings"
+        ]
+      },
+      {
+        "id": 13,
+        "layout": "two-column",
+        "title": "90-Day Launch Plan",
+        "left": "Weeks 1-2: Align\n• Pick 2-3 high-value workflows\n• Define guardrails + data sources\n• Stand up evaluation + review\n• Set success metrics",
+        "right": "Weeks 3-12: Build & Scale\n• Ship v1 workflows into production\n• Instrument telemetry + monitoring\n• Expand tool integrations\n• Create playbooks + training\n• Plan next wave of workflows"
+      },
+      {
+        "id": 14,
+        "layout": "title",
+        "title": "The AI-Native Advantage",
+        "subtitle": "Build systems that learn faster than competitors"
+      }
+    ]
+  }
+}
