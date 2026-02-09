@@ -740,13 +740,13 @@ class PPTXGenerator:
                     body.text_frame.clear()
             except Exception:
                 pass
-            reserve = int(Inches(0.45))
+            reserve = int(Inches(0.75 if (self.template_path and self.theme_name == "template") else 0.45))
             height = max(int(Inches(0.6)), int(body.height) - reserve)
             return body.left, body.top, body.width, height
 
         y_offset = Inches(1.35) if has_title else Inches(0.7)
         base_h = Inches(3.9 if has_title else 4.5)
-        reserve = Inches(0.45)
+        reserve = Inches(0.75 if (self.template_path and self.theme_name == "template") else 0.45)
         return Inches(0.7), y_offset, Inches(8.6), max(Inches(0.6), base_h - reserve)
 
     def _add_workflow_slide(self, config: dict) -> None:
@@ -1458,6 +1458,54 @@ class PPTXGenerator:
                 if not self._set_title_placeholder(slide, config.get("title", "")):
                     self._add_title_textbox(slide, config, y_pos=0.2)
 
+        if self.template_path and self.theme_name == "template":
+            usage_subtitle = str(config.get("usage_subtitle") or "").strip()
+            usage_points = config.get("usage_points") if isinstance(config.get("usage_points"), list) else []
+            usage_lines = [str(item).strip() for item in usage_points if str(item).strip()]
+
+            body_types = {
+                PP_PLACEHOLDER.BODY,
+                PP_PLACEHOLDER.OBJECT,
+                PP_PLACEHOLDER.VERTICAL_BODY,
+                PP_PLACEHOLDER.VERTICAL_OBJECT,
+            }
+            body_placeholders = []
+            for placeholder in slide.placeholders:
+                if not hasattr(placeholder, "text_frame"):
+                    continue
+                try:
+                    ph_type = placeholder.placeholder_format.type
+                    if ph_type not in body_types:
+                        continue
+                except Exception:
+                    pass
+                body_placeholders.append(placeholder)
+
+            body_placeholders = sorted(body_placeholders, key=lambda ph: int(ph.width) * int(ph.height), reverse=True)
+
+            subtitle_placeholder = None
+            main_body_placeholder = body_placeholders[0] if body_placeholders else None
+            if len(body_placeholders) >= 2:
+                subtitle_placeholder = min(body_placeholders, key=lambda ph: int(ph.top))
+                if subtitle_placeholder is main_body_placeholder:
+                    subtitle_placeholder = body_placeholders[1]
+
+            if usage_subtitle:
+                if not self._set_subtitle_placeholder(slide, usage_subtitle):
+                    if subtitle_placeholder is not None:
+                        self._fill_text_frame(subtitle_placeholder.text_frame, [usage_subtitle], as_bullets=False)
+
+            if usage_lines and main_body_placeholder is not None:
+                self._fill_text_frame(main_body_placeholder.text_frame, usage_lines, as_bullets=True)
+
+            for placeholder in body_placeholders:
+                if placeholder is main_body_placeholder or placeholder is subtitle_placeholder:
+                    continue
+                try:
+                    placeholder.text_frame.clear()
+                except Exception:
+                    pass
+
         img_path = self._resolve_fs_path(config.get("image_path"))
         if not (img_path and img_path.exists()):
             img_path = self._generate_image_asset(config)
@@ -1466,7 +1514,6 @@ class PPTXGenerator:
 
         if img_path and img_path.exists():
             if self.template_path and self.theme_name == "template":
-                x, y, cx, cy = self._get_content_box(slide, has_title=bool(config.get("title")))
                 picture_ph = None
                 try:
                     candidates = [ph for ph in slide.placeholders if hasattr(ph, "insert_picture")]
@@ -1475,11 +1522,8 @@ class PPTXGenerator:
                 except Exception:
                     picture_ph = None
 
-                # Prefer "contain" sizing (no cropping) and use the main content box rather than
-                # small template picture placeholders.
                 if picture_ph:
                     pic = picture_ph.insert_picture(str(img_path))
-                    left, top, w, h = self._compute_contain_geometry(img_path=img_path, x=x, y=y, cx=cx, cy=cy)
                     try:
                         pic.crop_left = 0
                         pic.crop_right = 0
@@ -1487,14 +1531,20 @@ class PPTXGenerator:
                         pic.crop_bottom = 0
                     except Exception:
                         pass
-                    try:
-                        pic.left = left
-                        pic.top = top
-                        pic.width = w
-                        pic.height = h
-                    except Exception:
-                        self._add_picture_contain(slide, img_path=img_path, x=x, y=y, cx=cx, cy=cy)
+
+                    # Optional override for templates where the picture placeholder is too small.
+                    if bool(config.get("expand_image_to_content_box")):
+                        x, y, cx, cy = self._get_content_box(slide, has_title=bool(config.get("title")))
+                        left, top, w, h = self._compute_contain_geometry(img_path=img_path, x=x, y=y, cx=cx, cy=cy)
+                        try:
+                            pic.left = left
+                            pic.top = top
+                            pic.width = w
+                            pic.height = h
+                        except Exception:
+                            self._add_picture_contain(slide, img_path=img_path, x=x, y=y, cx=cx, cy=cy)
                 else:
+                    x, y, cx, cy = self._get_content_box(slide, has_title=bool(config.get("title")))
                     self._add_picture_contain(slide, img_path=img_path, x=x, y=y, cx=cx, cy=cy)
             else:
                 x, y, cx, cy = self._get_content_box(slide, has_title=bool(config.get("title")))
@@ -1503,8 +1553,14 @@ class PPTXGenerator:
         caption = config.get("caption")
         if caption:
             w_in, h_in = self._slide_size_inches()
-            caption_y = h_in - 0.65
-            caption_box = slide.shapes.add_textbox(Inches(0.5), Inches(caption_y), Inches(w_in - 1.0), Inches(0.35))
+            # Keep caption above footer/logo area for templates.
+            if self.template_path and self.theme_name == "template":
+                caption_y = h_in - 0.95
+                cap_h = 0.28
+            else:
+                caption_y = h_in - 0.65
+                cap_h = 0.35
+            caption_box = slide.shapes.add_textbox(Inches(0.5), Inches(caption_y), Inches(w_in - 1.0), Inches(cap_h))
             caption_frame = caption_box.text_frame
             caption_frame.text = caption
             caption_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
@@ -1537,17 +1593,41 @@ class PPTXGenerator:
         if not candidates:
             return None
 
+        def normalize(name: str) -> str:
+            return re.sub(r"[^a-z0-9]+", " ", (name or "").strip().lower()).strip()
+
         for slide_layout in self.prs.slide_layouts:
             name = getattr(slide_layout, "name", "") or ""
             normalized = name.strip().lower()
             if any(normalized == c for c in candidates):
                 return slide_layout
 
+        best_layout = None
+        best_score = -1
         for slide_layout in self.prs.slide_layouts:
             name = getattr(slide_layout, "name", "") or ""
-            normalized = name.strip().lower()
-            if any(c in normalized for c in candidates):
-                return slide_layout
+            normalized = normalize(name)
+
+            score = 0
+            for candidate in candidates:
+                c = normalize(candidate)
+                if not c:
+                    continue
+                if normalized == c:
+                    score = max(score, 200 + len(c))
+                    continue
+                if re.search(rf"\b{re.escape(c)}\b", normalized):
+                    score = max(score, 120 + len(c))
+                    continue
+                if c in normalized:
+                    score = max(score, 80 + len(c))
+
+            if score > best_score:
+                best_layout = slide_layout
+                best_score = score
+
+        if best_score > 0:
+            return best_layout
 
         return None
 
@@ -1613,21 +1693,36 @@ class PPTXGenerator:
             title_ok = has_title(types)
             subtitle_ok = PP_PLACEHOLDER.SUBTITLE in types
             bodies = body_placeholders(layout)
+            layout_name = str(getattr(layout, "name", "") or "").lower()
 
             points = 0
             if kind == "title":
                 points += 10 if title_ok else 0
                 points += 5 if subtitle_ok else 0
                 points -= 3 * max(0, len(bodies) - 1)
+                if "title slide" in layout_name:
+                    points += 8
+                if any(flag in layout_name for flag in ("chapter", "closing", "agenda", "thank you")):
+                    points -= 16
             elif kind == "bullets":
                 points += 8 if title_ok else 0
                 points += 8 if len(bodies) >= 1 else 0
                 points -= 2 * max(0, len(bodies) - 1)
+                if "content slide" in layout_name:
+                    points += 10
+                if "agenda" in layout_name:
+                    points -= 24
+                if any(flag in layout_name for flag in ("closing", "thank you", "chapter")):
+                    points -= 12
             elif kind in {"workflow", "kpi-cards", "infographic"}:
                 # Prefer a title + a single large body area for diagrams/cards.
                 points += 8 if title_ok else 0
                 points += 6 if len(bodies) >= 1 else 0
                 points -= 2 * max(0, len(bodies) - 1)
+                if "content slide" in layout_name:
+                    points += 8
+                if any(flag in layout_name for flag in ("agenda", "closing", "chapter", "thank you")):
+                    points -= 14
             elif kind == "two-column":
                 points += 6 if title_ok else 0
                 if len(bodies) >= 2:
@@ -1638,19 +1733,33 @@ class PPTXGenerator:
                     points += 10 if left_side and right_side else 4
                 else:
                     points -= 10
+                if "agenda" in layout_name:
+                    points -= 24
+                if any(flag in layout_name for flag in ("closing", "chapter", "thank you")):
+                    points -= 12
             elif kind == "image":
                 points += 6 if title_ok else 0
                 picture_ok = PP_PLACEHOLDER.PICTURE in types or PP_PLACEHOLDER.BITMAP in types
                 points += 8 if picture_ok else 0
+                if "content slide" in layout_name:
+                    points += 4
+                if any(flag in layout_name for flag in ("agenda", "closing", "chapter", "thank you")):
+                    points -= 10
             elif kind == "chart":
                 points += 6 if title_ok else 0
                 chart_ok = PP_PLACEHOLDER.CHART in types
                 points += 10 if chart_ok else 0
                 points += 4 if len(bodies) >= 1 else 0
+                if "content slide" in layout_name:
+                    points += 6
+                if any(flag in layout_name for flag in ("agenda", "closing", "chapter", "thank you")):
+                    points -= 12
             elif kind == "blank":
                 # Prefer truly blank or near-blank layouts
                 points += 5 if not types else 0
                 points -= len(types)
+                if any(flag in layout_name for flag in ("closing", "chapter", "agenda", "thank you")):
+                    points -= 8
             else:
                 points += 0
 
@@ -1736,9 +1845,9 @@ class PPTXGenerator:
         except Exception:
             pass
 
-        # Base font sizes (template defaults are typically too small for screen reading).
-        base_size = Pt(24 if as_bullets else 22)
-        space_after = Pt(6 if as_bullets else 4)
+        # Balanced text sizing to improve fit/readability in template placeholders.
+        base_size = Pt(20 if as_bullets else 18)
+        space_after = Pt(5 if as_bullets else 3)
 
         for i, line in enumerate(lines):
             paragraph = text_frame.paragraphs[0] if i == 0 else text_frame.add_paragraph()
