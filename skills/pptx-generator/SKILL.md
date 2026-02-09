@@ -92,6 +92,7 @@ Or export snapshots from an existing deck:
 Export methods:
 - `--method powerpoint`: Use Windows PowerPoint via WSL interop (best fidelity when available).
 - `--method libreoffice`: Use `soffice` if installed in WSL/Linux.
+- Snapshot cleanup is safety-scoped: only prior `Slide*.png/jpg` files and gallery output are removed from `--outdir`.
 
 Iteration guideline:
 - Export snapshots → inspect slide by slide → shorten text / split dense slides / adjust layout overrides → regenerate → re-export.
@@ -110,7 +111,13 @@ Example:
 
 Notes:
 - If snapshot export fails (no PowerPoint/LibreOffice available), QA still runs based on the JSON structure only.
-- QA writes a QA-adjusted config to `<config>.qa.json` (override with `--qa-config-out`).
+- QA writes a QA-adjusted config to `<output-stem>.qa.json` next to the output PPTX by default (override with `--qa-config-out`).
+
+## Validation and errors
+
+- Input JSON is validated before generation.
+- Validation failures are shown as concise field-level errors (without Python tracebacks).
+- Use `--debug` to print full tracebacks for unexpected runtime errors.
 
 ## Inspect slide layouts (template debugging)
 
@@ -165,6 +172,10 @@ Each slide is an object with `layout` plus layout-specific fields:
   - `orientation` (`horizontal`/`vertical`, default `horizontal`)
   - `steps` (string[] or { title: string, subtitle?: string }[])
   - Optional: `show_numbers` (bool, default true)
+- `architecture`:
+  - `title` (string, optional)
+  - Optional: `top_row`/`top`, `middle_row`/`middle`, `bottom` (arrays of strings or objects with `title`/`subtitle`)
+  - If omitted, sensible defaults are rendered
 - `kpi-cards` (alias: `infographic`):
   - `title` (string, optional)
   - `cards` (or `items`) ({ label?: string, value?: string, note?: string, icon_path?: string }[])
@@ -188,6 +199,16 @@ Sections:
 - `palette.diagram`: affects `workflow` and `kpi-cards` shapes (`fill`, `line`, `text_primary`, `text_secondary`, `arrow`)
 - `palette.footer`: affects footer (`text`, `line`)
 - `palette.image`: affects generated images (`bg`, `accent`, `text`)
+
+## Troubleshooting
+
+- `Slide export failed` on WSL:
+  - Install LibreOffice in WSL and use `--snapshots-method libreoffice`, or
+  - Ensure Windows PowerPoint + `powershell.exe` interop are available and use `--snapshots-method powerpoint`.
+- Template layout mismatch:
+  - Run `--list-layouts`, then set `template_layout_index` on slides.
+- Unexpected crash:
+  - Re-run with `--debug` to capture full traceback.
 
 ## References
 
