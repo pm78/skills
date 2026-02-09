@@ -48,11 +48,12 @@ The generator can also create image assets on the fly (using Pillow) and embed t
 
 Example (see `assets/images_agenda_footer_palette_demo.json`):
 
-- `image_gen.kind`: `infographic` (default), `workflow`, `sketch`, `photo`
+- `image_gen.kind`: `infographic` (default), `workflow`, `sketch`, `photo`, `ui-dashboard`
 - `image_gen.prompt`: headline text to render on the image
 - `image_gen.aspect_ratio`: e.g. `16:9`, `8:9`, `1:1`
 - `image_gen.long_side_px` (or `width_px` + `height_px`): output resolution
 - Optional: `image_gen.steps` for `workflow` images
+- Optional (`ui-dashboard`): `app_title`, `sidebar_items`, `active_nav_index`, `kpi_cards`, `lanes`, `table_headers`, `table_rows`
 
 ## Charts
 
@@ -71,11 +72,24 @@ By default, the generator:
 - Inserts an `Agenda` slide after the first `title` slide (or at the beginning if there’s no title slide)
 - Adds a footer on each non-title slide: document title, confidentiality, and page number
 
+Professional mode (`presentation.professional`) upgrades this behavior:
+- Adds the deck date on the first rendered slide (typically the cover)
+- Adds the same date in the footer
+- Renders the agenda as clickable items linking to the corresponding slide
+
 Configure in `presentation`:
 - `title` (used for footer title)
 - `confidentiality` (used for footer confidentiality level)
-- `agenda`: set `enabled: false` to disable, or override `title`
+- `agenda`: set `enabled: false` to disable, or override `title`; optional `links: true` for clickable agenda items
+  - optional `style`: `cards` (recommended) or `list` when links are enabled
 - `footer`: set `enabled: false` to disable; options: `include_on_title`, `show_total`, `show_page_number`
+- `professional`: `true` or object:
+  - `enabled` (bool, default `true`)
+  - `date`: string or object (`value`, optional `format`, `on_title`, `in_footer`)
+  - `agenda_links` (bool, default `true`)
+  - `agenda` (bool, default `true`) to force agenda insertion in professional decks
+  - `back_to_agenda` (bool, default `true`) adds a clickable top-right link on every section slide
+  - `back_to_agenda_label` (string, default `Back to Agenda`)
 
 ## Visual QA loop (snapshots)
 
@@ -137,9 +151,11 @@ The generator accepts either of these JSON shapes:
 - `title` (string, optional)
 - `author` (string, optional)
 - `confidentiality` (string, optional): footer label (default: `Confidential`)
+- `date` (string|object, optional): deck date text or `{ value, format }`
 - `slides` (array, required)
 - `agenda` (bool|object, optional): auto agenda (default enabled)
 - `footer` (bool|object, optional): auto footer (default enabled)
+- `professional` (bool|object, optional): professional deck mode (date + linked agenda)
 - `palette` (object, optional): color overrides (see below)
 
 ### Slide layouts
@@ -153,6 +169,7 @@ Each slide is an object with `layout` plus layout-specific fields:
 - `title`: `title` (string), `subtitle` (string, optional)
 - `bullets`: `title` (string), `bullets` (string[], recommended 3–6)
 - `two-column`: `title` (string), `left` (string), `right` (string) — use `\n` for line breaks (literal `\\n` is also accepted)
+  - Optional: `force_manual_columns` (bool) to bypass template placeholders and render both columns in manual text boxes (useful for templates with problematic two-column placeholders)
 - `chart`:
   - `title` (string, optional)
   - `chart_type` (string, e.g. `column`, `bar`, `line`, `pie`)
@@ -160,6 +177,7 @@ Each slide is an object with `layout` plus layout-specific fields:
   - `series` ({ name: string, values: number[] }[])
   - Optional: `legend` (bool), `legend_position` (`right`/`left`/`top`/`bottom`), `style` (int)
 - `image`: `image_path` (string, required), `title` (string, optional), `caption` (string, optional)
+  - Optional template-text controls: `usage_subtitle` (string), `usage_points` (string[]), `usage_as_bullets` (bool, default `true`), `force_manual_usage_text` (bool)
   - Optional: `image_gen` (object) to generate the image asset:
     - `id` (string, optional): output file name base
     - `kind` (string): `infographic` | `workflow` | `sketch` | `photo`

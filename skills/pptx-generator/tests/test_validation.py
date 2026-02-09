@@ -43,6 +43,64 @@ def test_validate_config_rejects_image_without_source() -> None:
     assert "requires either image_path" in str(exc.value)
 
 
+def test_validate_config_accepts_professional_settings() -> None:
+    cfg = {
+        "presentation": {
+            "professional": {
+                "enabled": True,
+                "date": {"value": "today", "format": "%B %d, %Y", "on_title": True, "in_footer": True},
+                "agenda_links": True,
+            },
+            "slides": [{"layout": "title", "title": "Deck"}],
+        }
+    }
+    validated, wrapped = validate_config(cfg)
+    assert wrapped is True
+    assert isinstance(validated, dict)
+
+
+def test_validate_config_rejects_invalid_professional_type() -> None:
+    bad = {"presentation": {"professional": 42, "slides": [{"layout": "title", "title": "Deck"}]}}
+    with pytest.raises(ConfigValidationError) as exc:
+        validate_config(bad)
+    assert ".professional must be a boolean or object" in str(exc.value)
+
+
+def test_professional_mode_adds_back_to_agenda_links() -> None:
+    cfg = {
+        "presentation": {
+            "title": "Deck",
+            "professional": {
+                "enabled": True,
+                "agenda_links": True,
+                "agenda": True,
+                "back_to_agenda": True,
+                "date": {"value": "today"},
+            },
+            "footer": {"enabled": False},
+            "slides": [
+                {"layout": "title", "title": "Deck"},
+                {"layout": "bullets", "title": "Section A", "bullets": ["Alpha"]},
+                {"layout": "bullets", "title": "Section B", "bullets": ["Beta"]},
+            ],
+        }
+    }
+
+    generator = gp.PPTXGenerator.from_dict(cfg, theme="light")
+    prs = generator.generate()
+
+    # title + agenda + 2 sections
+    assert len(prs.slides) == 4
+    agenda_slide = prs.slides[1]
+
+    for idx in (2, 3):
+        slide = prs.slides[idx]
+        link_shapes = [shape for shape in slide.shapes if hasattr(shape, "text") and "Back to Agenda" in shape.text]
+        assert link_shapes, f"Missing back link on slide {idx + 1}"
+        target = link_shapes[0].click_action.target_slide
+        assert target is agenda_slide
+
+
 def test_snapshot_cleanup_preserves_unrelated_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     outdir = tmp_path / "snapshots"
     outdir.mkdir(parents=True, exist_ok=True)

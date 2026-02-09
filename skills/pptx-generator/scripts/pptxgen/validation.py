@@ -10,6 +10,7 @@ from .errors import ConfigValidationError
 
 _ALLOWED_LAYOUTS = {
     "title",
+    "agenda",
     "bullets",
     "two-column",
     "chart",
@@ -54,6 +55,14 @@ def _check_slide(slide: Dict[str, Any], idx: int, issues: list[str]) -> None:
             issues.append(f"{prefix}.title is required for layout='title' and must be a non-empty string")
         if "subtitle" in slide and not isinstance(slide.get("subtitle"), str):
             issues.append(f"{prefix}.subtitle must be a string when provided")
+        return
+
+    if layout == "agenda":
+        if "title" in slide and not isinstance(slide.get("title"), str):
+            issues.append(f"{prefix}.title must be a string when provided")
+        items = slide.get("agenda_items")
+        if items is not None and not isinstance(items, list):
+            issues.append(f"{prefix}.agenda_items must be a list when provided")
         return
 
     if layout == "bullets":
@@ -154,6 +163,22 @@ def _check_presentation(presentation: Dict[str, Any], issues: list[str], prefix:
         value = presentation.get(field)
         if value is not None and not isinstance(value, str):
             issues.append(f"{prefix}.{field} must be a string when provided")
+
+    professional = presentation.get("professional")
+    if professional is not None and not isinstance(professional, (bool, dict)):
+        issues.append(f"{prefix}.professional must be a boolean or object when provided")
+    if isinstance(professional, dict):
+        prof_date = professional.get("date")
+        if prof_date is not None and not isinstance(prof_date, (str, dict)):
+            issues.append(f"{prefix}.professional.date must be a string or object when provided")
+        if "back_to_agenda" in professional and not isinstance(professional.get("back_to_agenda"), bool):
+            issues.append(f"{prefix}.professional.back_to_agenda must be a boolean when provided")
+        if "back_to_agenda_label" in professional and not isinstance(professional.get("back_to_agenda_label"), str):
+            issues.append(f"{prefix}.professional.back_to_agenda_label must be a string when provided")
+
+    date_val = presentation.get("date")
+    if date_val is not None and not isinstance(date_val, (str, dict)):
+        issues.append(f"{prefix}.date must be a string or object when provided")
 
     agenda = presentation.get("agenda")
     if agenda is not None and not isinstance(agenda, (bool, dict)):

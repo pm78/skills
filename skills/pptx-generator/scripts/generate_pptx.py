@@ -15,6 +15,7 @@ import subprocess
 import sys
 import zipfile
 import zlib
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Tuple
 from xml.etree import ElementTree as ET
@@ -311,6 +312,176 @@ class PPTXGenerator:
         h_in = float(int(self.prs.slide_height)) / float(Inches(1))
         return w_in, h_in
 
+    def _format_human_date(self, dt: datetime, fmt: str) -> str:
+        rendered = dt.strftime(fmt)
+        # Common cleanup for day-of-month with leading zero in "%d".
+        return rendered.replace(" 0", " ")
+
+    def _resolve_deck_date_text(self, presentation_config: dict, professional_cfg: dict) -> str:
+        date_cfg = professional_cfg.get("date")
+        fallback = presentation_config.get("date")
+        raw_value: Any = None
+        date_fmt = "%B %d, %Y"
+
+        if isinstance(date_cfg, str):
+            raw_value = date_cfg
+        elif isinstance(date_cfg, dict):
+            raw_value = date_cfg.get("value")
+            if isinstance(date_cfg.get("format"), str) and date_cfg.get("format").strip():
+                date_fmt = str(date_cfg.get("format")).strip()
+
+        if raw_value is None:
+            if isinstance(fallback, str):
+                raw_value = fallback
+            elif isinstance(fallback, dict):
+                raw_value = fallback.get("value")
+                if isinstance(fallback.get("format"), str) and fallback.get("format").strip():
+                    date_fmt = str(fallback.get("format")).strip()
+
+        if raw_value is None or str(raw_value).strip() == "":
+            return self._format_human_date(datetime.now(), date_fmt)
+
+        raw = str(raw_value).strip()
+        lowered = raw.lower()
+        if lowered in {"today", "now"}:
+            return self._format_human_date(datetime.now(), date_fmt)
+
+        # Try to parse ISO-ish date strings; if parsing fails, keep raw text.
+        try:
+            parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            return self._format_human_date(parsed, date_fmt)
+        except Exception:
+            return raw
+
+    def _resolve_professional_settings(self, presentation_config: dict) -> dict:
+        raw = presentation_config.get("professional")
+        if raw is False or raw is None:
+            return {
+                "enabled": False,
+                "date_text": "",
+                "date_on_title": False,
+                "date_in_footer": False,
+                "agenda_links": False,
+                "force_agenda": False,
+                "back_to_agenda": False,
+                "back_to_agenda_label": "Back to Agenda",
+            }
+
+        if raw is True:
+            raw = {}
+        if not isinstance(raw, dict):
+            raw = {}
+
+        enabled = bool(raw.get("enabled", True))
+        if not enabled:
+            return {
+                "enabled": False,
+                "date_text": "",
+                "date_on_title": False,
+                "date_in_footer": False,
+                "agenda_links": False,
+                "force_agenda": False,
+                "back_to_agenda": False,
+                "back_to_agenda_label": "Back to Agenda",
+            }
+
+        date_cfg = raw.get("date")
+        date_on_title = True
+        date_in_footer = True
+        if isinstance(date_cfg, dict):
+            date_on_title = bool(date_cfg.get("on_title", True))
+            date_in_footer = bool(date_cfg.get("in_footer", True))
+
+        date_text = self._resolve_deck_date_text(presentation_config, raw)
+        agenda_links = bool(raw.get("agenda_links", True))
+        force_agenda = bool(raw.get("agenda", True))
+        back_to_agenda = bool(raw.get("back_to_agenda", True))
+        back_to_agenda_label = str(raw.get("back_to_agenda_label") or "Back to Agenda").strip() or "Back to Agenda"
+
+        return {
+            "enabled": True,
+            "date_text": date_text,
+            "date_on_title": date_on_title,
+            "date_in_footer": date_in_footer,
+            "agenda_links": agenda_links,
+            "force_agenda": force_agenda,
+            "back_to_agenda": back_to_agenda,
+            "back_to_agenda_label": back_to_agenda_label,
+        }
+
+    def _add_cover_date(self, slide, *, date_text: str, slide_config: Optional[dict] = None) -> None:
+        if not date_text:
+            return
+
+        w_in, h_in = self._slide_size_inches()
+        palette = self._footer_palette(slide_config)
+        box_w = 2.7
+        box_h = 0.26
+        box_x = max(0.5, w_in - box_w - 0.55)
+        box_y = h_in - box_h - 0.28
+
+        date_box = slide.shapes.add_textbox(Inches(box_x), Inches(box_y), Inches(box_w), Inches(box_h))
+        tf = date_box.text_frame
+        tf.clear()
+        tf.word_wrap = False
+        try:
+            tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+            tf.margin_left = Inches(0.02)
+            tf.margin_right = Inches(0.02)
+            tf.margin_top = Inches(0.01)
+            tf.margin_bottom = Inches(0.01)
+        except Exception:
+            pass
+
+        p = tf.paragraphs[0]
+        p.text = date_text
+        p.font.size = Pt(10 if (self.template_path and self.theme_name == "template") else 11)
+        self._apply_color_to_font(p.font, palette["text"])
+        p.alignment = PP_ALIGN.RIGHT
+
+    def _add_back_to_agenda_link(
+        self,
+        slide,
+        *,
+        agenda_slide,
+        label: str = "Back to Agenda",
+        slide_config: Optional[dict] = None,
+    ) -> None:
+        if agenda_slide is None or not label:
+            return
+
+        w_in, _ = self._slide_size_inches()
+        palette = self._footer_palette(slide_config)
+
+        box_w = 1.7
+        box_h = 0.22
+        box_x = max(0.5, w_in - box_w - 0.55)
+        box_y = 0.11 if (self.template_path and self.theme_name == "template") else 0.14
+
+        link_box = slide.shapes.add_textbox(Inches(box_x), Inches(box_y), Inches(box_w), Inches(box_h))
+        tf = link_box.text_frame
+        tf.clear()
+        tf.word_wrap = False
+        try:
+            tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+            tf.margin_left = Inches(0.01)
+            tf.margin_right = Inches(0.01)
+            tf.margin_top = Inches(0.01)
+            tf.margin_bottom = Inches(0.01)
+        except Exception:
+            pass
+        p = tf.paragraphs[0]
+        p.text = label
+        p.font.size = Pt(10)
+        p.font.underline = True
+        self._apply_color_to_font(p.font, palette["line"])
+        p.alignment = PP_ALIGN.RIGHT
+
+        try:
+            link_box.click_action.target_slide = agenda_slide
+        except Exception:
+            pass
+
     def _should_footer(self, slide_config: dict, *, include_on_title: bool) -> bool:
         if slide_config.get("footer_exclude"):
             return False
@@ -348,6 +519,7 @@ class PPTXGenerator:
         *,
         doc_title: str,
         confidentiality: str,
+        deck_date: Optional[str],
         page_no: Optional[int],
         total_pages: Optional[int],
         slide_config: Optional[dict] = None,
@@ -359,7 +531,7 @@ class PPTXGenerator:
         # Worldline templates commonly include a bottom-left logo; so we place a
         # single right-aligned footer text box on the bottom-right.
         if self.template_path and self.theme_name == "template":
-            parts = [t for t in [doc_title, confidentiality] if t]
+            parts = [t for t in [doc_title, confidentiality, deck_date] if t]
             if page_no is not None:
                 if total_pages is not None and total_pages > 0:
                     parts.append(f"{page_no}/{total_pages}")
@@ -418,7 +590,7 @@ class PPTXGenerator:
         except Exception:
             pass
 
-        left_text = " | ".join([t for t in [doc_title, confidentiality] if t])
+        left_text = " | ".join([t for t in [doc_title, confidentiality, deck_date] if t])
         if left_text:
             left_box = slide.shapes.add_textbox(Inches(margin_x), Inches(footer_y), Inches(left_w), Inches(footer_h))
             tf = left_box.text_frame
@@ -444,26 +616,30 @@ class PPTXGenerator:
             self._apply_color_to_font(p.font, palette["text"])
             p.alignment = PP_ALIGN.RIGHT
 
-    def _insert_agenda_slide(self, slides: list[dict]) -> list[dict]:
+    def _insert_agenda_slide(self, slides: list[dict], *, with_links: bool, force_enabled: bool) -> list[dict]:
         if any(bool(s.get("is_agenda")) for s in slides):
             return slides
 
         cfg = getattr(self, "presentation_config", {}) or {}
         agenda_cfg = cfg.get("agenda")
         if agenda_cfg is False:
-            return slides
+            if not force_enabled:
+                return slides
+            agenda_cfg = {}
         if agenda_cfg is True:
             agenda_cfg = {}
         if not isinstance(agenda_cfg, dict):
             agenda_cfg = {}
 
         enabled = bool(agenda_cfg.get("enabled", True))
+        if force_enabled:
+            enabled = True
         if not enabled:
             return slides
         if len(slides) <= 1:
             return slides
 
-        titles: list[str] = []
+        entries: list[dict] = []
         for i, sc in enumerate(slides):
             if sc.get("layout") == "title":
                 # Exclude title-style slides (cover/section breaks) from the agenda by default.
@@ -472,33 +648,91 @@ class PPTXGenerator:
                 continue
             title = str(sc.get("agenda_title") or sc.get("title") or "").strip()
             if title:
-                titles.append(title)
+                key = f"agenda-target-{i}"
+                sc["_agenda_key"] = key
+                entries.append({"text": title, "target_key": key})
 
-        if not titles:
+        if not entries:
             return slides
 
         agenda_title = str(agenda_cfg.get("title") or "Agenda").strip()
-        if len(titles) <= 10:
-            agenda_slide = {"layout": "bullets", "title": agenda_title, "bullets": titles, "is_agenda": True}
+        if with_links:
+            agenda_slide = {
+                "layout": "agenda",
+                "title": agenda_title,
+                "agenda_items": entries,
+                "style": str(agenda_cfg.get("style") or "cards"),
+                "is_agenda": True,
+            }
+            if "columns" in agenda_cfg:
+                agenda_slide["columns"] = agenda_cfg.get("columns")
+            if "template_layout" in agenda_cfg:
+                agenda_slide["template_layout"] = agenda_cfg.get("template_layout")
+            if "template_layout_index" in agenda_cfg:
+                agenda_slide["template_layout_index"] = agenda_cfg.get("template_layout_index")
         else:
-            half = math.ceil(len(titles) / 2)
-            left = "\n".join([f"• {t}" for t in titles[:half]])
-            right = "\n".join([f"• {t}" for t in titles[half:]])
-            agenda_slide = {"layout": "two-column", "title": agenda_title, "left": left, "right": right, "is_agenda": True}
+            titles = [str(item.get("text") or "").strip() for item in entries if str(item.get("text") or "").strip()]
+            if len(titles) <= 10:
+                agenda_slide = {"layout": "bullets", "title": agenda_title, "bullets": titles, "is_agenda": True}
+            else:
+                half = math.ceil(len(titles) / 2)
+                left = "\n".join([f"• {t}" for t in titles[:half]])
+                right = "\n".join([f"• {t}" for t in titles[half:]])
+                agenda_slide = {
+                    "layout": "two-column",
+                    "title": agenda_title,
+                    "left": left,
+                    "right": right,
+                    "is_agenda": True,
+                }
 
         insert_at = 1 if slides and slides[0].get("layout") == "title" else 0
         return [*slides[:insert_at], agenda_slide, *slides[insert_at:]]
+
+    def _resolve_agenda_links(self) -> None:
+        pending = list(getattr(self, "_agenda_link_pending", []) or [])
+        targets = dict(getattr(self, "_agenda_target_slides", {}) or {})
+        for shape, target_key in pending:
+            if not target_key:
+                continue
+            target_slide = targets.get(str(target_key))
+            if target_slide is None:
+                continue
+            try:
+                shape.click_action.target_slide = target_slide
+            except Exception:
+                continue
 
     def generate(self) -> Presentation:
         presentation_config = self.config.get("presentation", self.config)
         self.presentation_config = presentation_config
         slides = list(presentation_config.get("slides", []) or [])
 
-        slides = self._insert_agenda_slide(slides)
+        professional = self._resolve_professional_settings(presentation_config)
+        deck_date = professional["date_text"] if professional.get("enabled") else ""
+
+        # Agenda links are enabled by default in professional mode.
+        agenda_cfg = presentation_config.get("agenda")
+        agenda_links_requested = bool(professional.get("agenda_links", False))
+        if isinstance(agenda_cfg, dict):
+            if "links" in agenda_cfg:
+                agenda_links_requested = bool(agenda_cfg.get("links"))
+            elif "linked" in agenda_cfg:
+                agenda_links_requested = bool(agenda_cfg.get("linked"))
+
+        slides = self._insert_agenda_slide(
+            slides,
+            with_links=agenda_links_requested,
+            force_enabled=bool(professional.get("force_agenda", False)),
+        )
         presentation_config["slides"] = slides
+
+        self._agenda_link_pending: list[tuple[Any, str]] = []
+        self._agenda_target_slides: dict[str, Any] = {}
 
         layout_handlers = {
             "title": self._add_title_slide,
+            "agenda": self._add_agenda_slide,
             "bullets": self._add_bullets_slide,
             "two-column": self._add_two_column_slide,
             "chart": self._add_chart_slide,
@@ -524,6 +758,7 @@ class PPTXGenerator:
         include_on_title = bool(footer_cfg.get("include_on_title", False))
         show_total = bool(footer_cfg.get("show_total", False))
         show_page_number = bool(footer_cfg.get("show_page_number", True))
+        footer_date = deck_date if professional.get("date_in_footer") else ""
 
         total_pages = 0
         if footer_enabled and show_page_number:
@@ -532,6 +767,8 @@ class PPTXGenerator:
                     total_pages += 1
 
         page_no = 0
+        cover_date_added = False
+        agenda_slide_ref = None
         for slide_config in slides:
             layout_type = slide_config.get("layout", "blank")
             handler = layout_handlers.get(layout_type, self._add_blank_slide)
@@ -540,6 +777,34 @@ class PPTXGenerator:
             if len(self.prs.slides) <= before:
                 continue
             slide = self.prs.slides[-1]
+
+            # Agenda item targets are resolved after all slides are created.
+            agenda_key = str(slide_config.get("_agenda_key") or "").strip()
+            if agenda_key:
+                self._agenda_target_slides[agenda_key] = slide
+
+            if layout_type == "agenda" or bool(slide_config.get("is_agenda")):
+                agenda_slide_ref = slide
+
+            # Add date on the first rendered slide in professional mode.
+            if professional.get("date_on_title") and deck_date and not cover_date_added:
+                self._add_cover_date(slide, date_text=deck_date, slide_config=slide_config)
+                cover_date_added = True
+
+            if (
+                professional.get("enabled")
+                and professional.get("back_to_agenda")
+                and agenda_slide_ref is not None
+                and layout_type not in {"title", "agenda"}
+                and not bool(slide_config.get("is_agenda"))
+            ):
+                self._add_back_to_agenda_link(
+                    slide,
+                    agenda_slide=agenda_slide_ref,
+                    label=str(professional.get("back_to_agenda_label") or "Back to Agenda"),
+                    slide_config=slide_config,
+                )
+
             if footer_enabled and self._should_footer(slide_config, include_on_title=include_on_title):
                 if show_page_number:
                     page_no += 1
@@ -547,11 +812,13 @@ class PPTXGenerator:
                     slide,
                     doc_title=doc_title,
                     confidentiality=confidentiality,
+                    deck_date=footer_date,
                     page_no=page_no if show_page_number else None,
                     total_pages=total_pages if (show_page_number and show_total) else None,
                     slide_config=slide_config,
                 )
 
+        self._resolve_agenda_links()
         return self.prs
 
     def _get_blank_layout(self):
@@ -656,15 +923,20 @@ class PPTXGenerator:
         slide = self.prs.slides.add_slide(layout)
         self._set_slide_background(slide)
 
+        force_manual_columns = bool(config.get("force_manual_columns"))
+        title_set = False
         if self.template_path and self.theme_name == "template":
             title_set = self._set_title_placeholder(slide, config.get("title", ""))
-            if self._fill_two_column_placeholders(slide, config.get("left", ""), config.get("right", "")):
+            if not force_manual_columns and self._fill_two_column_placeholders(
+                slide, config.get("left", ""), config.get("right", "")
+            ):
                 if config.get("title") and not title_set:
                     self._add_title_textbox(slide, config, y_pos=0.25)
                 return
 
-        self._add_title_textbox(slide, config)
-        x, y, cx, cy = self._get_content_box(slide, has_title=True)
+        if not (self.template_path and self.theme_name == "template" and title_set):
+            self._add_title_textbox(slide, config)
+        x, y, cx, cy = self._get_two_column_content_box(slide, has_title=True)
         gap = Inches(0.35)
         col_w = max(Inches(1.0), (int(cx) - int(gap)) // 2)
         left_box = slide.shapes.add_textbox(x, y, col_w, cy)
@@ -680,17 +952,229 @@ class PPTXGenerator:
         right_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
         self._format_multiline_text(right_frame, config.get("right", ""))
 
+    def _add_agenda_slide(self, config: dict) -> None:
+        layout = self._resolve_layout(
+            config,
+            kind="bullets",
+            name_candidates=["agenda", "title and content", "title and text", "content", "text"],
+        )
+        slide = self.prs.slides.add_slide(layout)
+        self._set_slide_background(slide)
+
+        title_set = False
+        if self.template_path and self.theme_name == "template":
+            title_set = self._set_title_placeholder(slide, config.get("title", ""))
+        if not title_set:
+            self._add_title_textbox(slide, config)
+
+        # Remove placeholder scaffolding on agenda slides so edit mode doesn't show
+        # "[Subtitle]" / "[Text]" prompts behind custom content.
+        if self.template_path and self.theme_name == "template":
+            removable_types = {
+                PP_PLACEHOLDER.SUBTITLE,
+                PP_PLACEHOLDER.BODY,
+                PP_PLACEHOLDER.OBJECT,
+                PP_PLACEHOLDER.VERTICAL_BODY,
+                PP_PLACEHOLDER.VERTICAL_OBJECT,
+            }
+            title_shape = getattr(slide.shapes, "title", None)
+            for ph in list(slide.placeholders):
+                if ph is title_shape:
+                    continue
+                try:
+                    ph_type = ph.placeholder_format.type
+                except Exception:
+                    continue
+                if ph_type in removable_types:
+                    try:
+                        ph_el = ph._element
+                        ph_el.getparent().remove(ph_el)
+                    except Exception:
+                        pass
+
+        raw_items = config.get("agenda_items") if isinstance(config.get("agenda_items"), list) else []
+        items: list[dict] = []
+        for item in raw_items:
+            if isinstance(item, dict):
+                text = str(item.get("text") or "").strip()
+                target_key = str(item.get("target_key") or "").strip()
+            else:
+                text = str(item).strip()
+                target_key = ""
+            if text:
+                items.append({"text": text, "target_key": target_key})
+
+        if not items:
+            return
+        if not hasattr(self, "_agenda_link_pending"):
+            self._agenda_link_pending = []
+
+        x, y, cx, cy = self._get_content_box(slide, has_title=True)
+        style = str(config.get("style") or "cards").strip().lower()
+        total = len(items)
+        try:
+            cols_raw = int(config.get("columns", 1 if total <= 8 else 2))
+        except Exception:
+            cols_raw = 1 if total <= 8 else 2
+        cols = max(1, min(cols_raw, 3))
+        rows = max(1, math.ceil(total / cols))
+
+        if style == "cards":
+            col_gap = int(Inches(0.28))
+            item_gap = int(Inches(0.16))
+            col_w = max(int(Inches(1.6)), (int(cx) - (cols - 1) * col_gap) // cols)
+            row_h = max(int(Inches(0.42)), (int(cy) - (rows - 1) * item_gap) // rows)
+
+            palette = self._diagram_palette(config)
+            for idx, item in enumerate(items):
+                col = idx // rows
+                row = idx % rows
+                if col >= cols:
+                    col = cols - 1
+                    row = rows - 1
+
+                item_x = int(x) + col * (col_w + col_gap)
+                item_y = int(y) + row * (row_h + item_gap)
+                card = slide.shapes.add_shape(
+                    MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE,
+                    item_x,
+                    item_y,
+                    col_w,
+                    row_h,
+                )
+                try:
+                    card.fill.solid()
+                    # Subtle surface tint keeps cards readable on both light and template themes.
+                    fill_color = palette["fill"]
+                    self._apply_color_to_fore(card.fill.fore_color, fill_color)
+                    card.fill.transparency = 0.10
+                except Exception:
+                    pass
+                try:
+                    self._apply_color_to_fore(card.line.color, palette["line"])
+                    card.line.width = Pt(1.1)
+                except Exception:
+                    pass
+
+                tf = card.text_frame
+                tf.clear()
+                tf.word_wrap = True
+                tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
+                try:
+                    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+                    tf.margin_left = Inches(0.14)
+                    tf.margin_right = Inches(0.14)
+                    tf.margin_top = Inches(0.05)
+                    tf.margin_bottom = Inches(0.05)
+                except Exception:
+                    pass
+
+                item_label = str(item["text"]).strip()
+                p = tf.paragraphs[0]
+                p.text = f"{idx + 1:02d}  {item_label}"
+                p.level = 0
+                p.font.size = Pt(14 if (self.template_path and self.theme_name == "template") else 16)
+                p.font.bold = True
+                self._apply_color_to_font(p.font, palette["text_primary"])
+                p.space_after = Pt(0)
+                p.alignment = PP_ALIGN.LEFT
+
+                target_key = item.get("target_key")
+                if target_key:
+                    self._agenda_link_pending.append((card, target_key))
+        else:
+            col_gap = int(Inches(0.35))
+            item_gap = int(Inches(0.08))
+            col_w = max(int(Inches(1.5)), (int(cx) - (cols - 1) * col_gap) // cols)
+            row_h = max(int(Inches(0.34)), (int(cy) - (rows - 1) * item_gap) // rows)
+
+            for idx, item in enumerate(items):
+                col = idx // rows
+                row = idx % rows
+                if col >= cols:
+                    col = cols - 1
+                    row = rows - 1
+
+                item_x = int(x) + col * (col_w + col_gap)
+                item_y = int(y) + row * (row_h + item_gap)
+                item_box = slide.shapes.add_textbox(item_x, item_y, col_w, row_h)
+                tf = item_box.text_frame
+                tf.clear()
+                tf.word_wrap = True
+                tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
+                try:
+                    tf.vertical_anchor = MSO_ANCHOR.TOP
+                    tf.margin_left = Inches(0.05)
+                    tf.margin_right = Inches(0.05)
+                    tf.margin_top = Inches(0.01)
+                    tf.margin_bottom = Inches(0.01)
+                except Exception:
+                    pass
+
+                p = tf.paragraphs[0]
+                p.text = f"• {item['text']}"
+                p.level = 0
+                p.font.size = Pt(16 if (self.template_path and self.theme_name == "template") else 17)
+                if self.colors:
+                    p.font.color.rgb = self.colors["text_primary"]
+                p.space_after = Pt(4)
+
+                target_key = item.get("target_key")
+                if target_key:
+                    self._agenda_link_pending.append((item_box, target_key))
+
+    def _get_two_column_content_box(self, slide, *, has_title: bool) -> Tuple[Any, Any, Any, Any]:
+        # Templates can expose asymmetric body placeholders for "two-column" layouts.
+        # Compute a stable union box across substantive body placeholders.
+        if self.template_path and self.theme_name == "template":
+            bodies = self._get_body_placeholders(slide)
+            if bodies:
+                substantial = [b for b in bodies if int(b.height) >= int(Inches(0.90))]
+                if substantial:
+                    left = min(int(b.left) for b in substantial)
+                    top = min(int(b.top) for b in substantial)
+                    right = max(int(b.left) + int(b.width) for b in substantial)
+                    bottom = max(int(b.top) + int(b.height) for b in substantial)
+
+                    # Keep content clear of title and footer/master elements.
+                    title_shape = getattr(slide.shapes, "title", None)
+                    if title_shape is not None:
+                        top = max(top, int(title_shape.top) + int(title_shape.height) + int(Inches(0.10)))
+
+                    max_bottom = int(self.prs.slide_height) - int(Inches(0.90))
+                    bottom = min(bottom, max_bottom)
+                    if bottom - top >= int(Inches(1.8)):
+                        return left, top, max(int(Inches(1.6)), right - left), bottom - top
+
+            # Conservative fallback box for template slides.
+            y_offset = Inches(1.50) if has_title else Inches(0.85)
+            reserve = Inches(0.90)
+            return Inches(0.55), y_offset, Inches(8.9), max(Inches(1.8), self.prs.slide_height - y_offset - reserve)
+
+        return self._get_content_box(slide, has_title=has_title)
+
     def _format_multiline_text(self, text_frame, text: str) -> None:
         text = self._normalize_newlines(text)
         lines = text.split("\n") if text else [""]
 
         for i, line in enumerate(lines):
             paragraph = text_frame.paragraphs[0] if i == 0 else text_frame.add_paragraph()
-            paragraph.text = line
-            paragraph.font.size = Pt(16)
+            cleaned = line.strip()
+            is_bullet = cleaned.startswith("•") or cleaned.startswith("- ") or cleaned.startswith("* ")
+            if is_bullet:
+                cleaned = cleaned.lstrip("•").lstrip("-").lstrip("*").lstrip()
+                paragraph.text = f"• {cleaned}" if cleaned else "•"
+            else:
+                paragraph.text = cleaned
+
+            base_size = 14 if (self.template_path and self.theme_name == "template") else 16
+            paragraph.font.size = Pt(base_size)
+            if i == 0 and not is_bullet and cleaned:
+                paragraph.font.bold = True
+                paragraph.font.size = Pt(base_size + 1)
             if self.colors:
                 paragraph.font.color.rgb = self.colors["text_primary"]
-            paragraph.space_after = Pt(8)
+            paragraph.space_after = Pt(6 if is_bullet else 8)
 
     def _diagram_palette(self, slide_config: Optional[dict] = None) -> Dict[str, RGBColor | MSO_THEME_COLOR]:
         if self.colors:
@@ -1421,7 +1905,16 @@ class PPTXGenerator:
         if value:
             p0 = tf.paragraphs[0]
             p0.text = value
-            p0.font.size = Pt(30)
+            value_len = len(value.strip())
+            if value_len >= 12:
+                value_size = 18
+            elif value_len >= 9:
+                value_size = 22
+            else:
+                value_size = 28
+            if self.template_path and self.theme_name == "template":
+                value_size = max(16, value_size - 3)
+            p0.font.size = Pt(value_size)
             p0.font.bold = True
             self._apply_color_to_font(p0.font, palette["text_primary"])
         else:
@@ -1431,7 +1924,7 @@ class PPTXGenerator:
         if label:
             p1 = tf.add_paragraph()
             p1.text = label
-            p1.font.size = Pt(14)
+            p1.font.size = Pt(12 if (self.template_path and self.theme_name == "template") else 14)
             p1.font.bold = True
             self._apply_color_to_font(p1.font, palette["text_secondary"])
 
@@ -1439,7 +1932,7 @@ class PPTXGenerator:
         if note:
             p2 = tf.add_paragraph()
             p2.text = note
-            p2.font.size = Pt(12)
+            p2.font.size = Pt(10 if (self.template_path and self.theme_name == "template") else 12)
             self._apply_color_to_font(p2.font, palette["text_secondary"])
 
     def _add_image_slide(self, config: dict) -> None:
@@ -1462,6 +1955,8 @@ class PPTXGenerator:
             usage_subtitle = str(config.get("usage_subtitle") or "").strip()
             usage_points = config.get("usage_points") if isinstance(config.get("usage_points"), list) else []
             usage_lines = [str(item).strip() for item in usage_points if str(item).strip()]
+            force_manual_usage_text = bool(config.get("force_manual_usage_text"))
+            usage_as_bullets = bool(config.get("usage_as_bullets", True))
 
             body_types = {
                 PP_PLACEHOLDER.BODY,
@@ -1490,21 +1985,73 @@ class PPTXGenerator:
                 if subtitle_placeholder is main_body_placeholder:
                     subtitle_placeholder = body_placeholders[1]
 
-            if usage_subtitle:
-                if not self._set_subtitle_placeholder(slide, usage_subtitle):
-                    if subtitle_placeholder is not None:
-                        self._fill_text_frame(subtitle_placeholder.text_frame, [usage_subtitle], as_bullets=False)
+            if force_manual_usage_text and (usage_subtitle or usage_lines):
+                for placeholder in body_placeholders:
+                    try:
+                        placeholder.text_frame.clear()
+                    except Exception:
+                        pass
 
-            if usage_lines and main_body_placeholder is not None:
-                self._fill_text_frame(main_body_placeholder.text_frame, usage_lines, as_bullets=True)
+                slide_mid = int(self.prs.slide_width) / 2
+                left_ph = [ph for ph in body_placeholders if (int(ph.left) + int(ph.width) / 2) < slide_mid]
+                if left_ph:
+                    left = min(int(ph.left) for ph in left_ph)
+                    top = min(int(ph.top) for ph in left_ph)
+                    right = max(int(ph.left) + int(ph.width) for ph in left_ph)
+                    bottom = max(int(ph.top) + int(ph.height) for ph in left_ph)
+                else:
+                    left = int(Inches(0.55))
+                    top = int(Inches(1.45))
+                    right = int(Inches(4.45))
+                    bottom = int(self.prs.slide_height - Inches(0.95))
 
-            for placeholder in body_placeholders:
-                if placeholder is main_body_placeholder or placeholder is subtitle_placeholder:
-                    continue
-                try:
-                    placeholder.text_frame.clear()
-                except Exception:
-                    pass
+                title_shape = getattr(slide.shapes, "title", None)
+                if title_shape is not None:
+                    title_bottom = int(title_shape.top) + int(title_shape.height) + int(Inches(0.08))
+                    top = max(top, title_bottom)
+
+                bottom = min(bottom, int(self.prs.slide_height) - int(Inches(0.95)))
+                if bottom - top < int(Inches(1.6)):
+                    top = int(Inches(1.45))
+                    bottom = int(self.prs.slide_height) - int(Inches(0.95))
+
+                usage_title_h = int(Inches(0.42)) if usage_subtitle else 0
+                if usage_subtitle:
+                    subtitle_box = slide.shapes.add_textbox(left, top, right - left, usage_title_h)
+                    subtitle_tf = subtitle_box.text_frame
+                    subtitle_tf.clear()
+                    subtitle_tf.word_wrap = True
+                    subtitle_tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
+                    p = subtitle_tf.paragraphs[0]
+                    p.text = usage_subtitle
+                    p.font.bold = True
+                    p.font.size = Pt(22 if (self.template_path and self.theme_name == "template") else 20)
+                    if self.colors:
+                        p.font.color.rgb = self.colors["text_primary"]
+                    top = top + usage_title_h + int(Inches(0.05))
+
+                if usage_lines:
+                    usage_box = slide.shapes.add_textbox(left, top, right - left, max(int(Inches(1.0)), bottom - top))
+                    usage_tf = usage_box.text_frame
+                    usage_tf.word_wrap = True
+                    usage_tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
+                    self._fill_text_frame(usage_tf, usage_lines, as_bullets=usage_as_bullets)
+            else:
+                if usage_subtitle:
+                    if not self._set_subtitle_placeholder(slide, usage_subtitle):
+                        if subtitle_placeholder is not None:
+                            self._fill_text_frame(subtitle_placeholder.text_frame, [usage_subtitle], as_bullets=False)
+
+                if usage_lines and main_body_placeholder is not None:
+                    self._fill_text_frame(main_body_placeholder.text_frame, usage_lines, as_bullets=usage_as_bullets)
+
+                for placeholder in body_placeholders:
+                    if placeholder is main_body_placeholder or placeholder is subtitle_placeholder:
+                        continue
+                    try:
+                        placeholder.text_frame.clear()
+                    except Exception:
+                        pass
 
         img_path = self._resolve_fs_path(config.get("image_path"))
         if not (img_path and img_path.exists()):
@@ -1523,6 +2070,10 @@ class PPTXGenerator:
                     picture_ph = None
 
                 if picture_ph:
+                    ph_left = int(picture_ph.left)
+                    ph_top = int(picture_ph.top)
+                    ph_width = int(picture_ph.width)
+                    ph_height = int(picture_ph.height)
                     pic = picture_ph.insert_picture(str(img_path))
                     try:
                         pic.crop_left = 0
@@ -1531,6 +2082,37 @@ class PPTXGenerator:
                         pic.crop_bottom = 0
                     except Exception:
                         pass
+                    try:
+                        # Keep template picture clear of footer text/master marks.
+                        max_bottom = int(self.prs.slide_height) - int(Inches(0.88))
+                        overflow = int(pic.top) + int(pic.height) - max_bottom
+                        if overflow > 0:
+                            pic.height = max(int(Inches(1.0)), int(pic.height) - overflow)
+                    except Exception:
+                        pass
+
+                    # Some templates produce invalid picture geometry (e.g., zero width) after insert_picture.
+                    # Fallback: manually place a contained image inside the picture placeholder bounds.
+                    invalid_geometry = False
+                    try:
+                        invalid_geometry = int(pic.width) < int(Inches(0.5)) or int(pic.height) < int(Inches(0.5))
+                    except Exception:
+                        invalid_geometry = True
+                    if invalid_geometry:
+                        safe_top = max(0, ph_top)
+                        safe_height = ph_height - max(0, safe_top - ph_top)
+                        if safe_height > int(Inches(0.8)) and ph_width > int(Inches(1.0)):
+                            safe_bottom = min(int(self.prs.slide_height) - int(Inches(0.88)), safe_top + safe_height)
+                            safe_height = max(int(Inches(0.8)), safe_bottom - safe_top)
+                            safe_left = ph_left
+                            self._add_picture_contain(
+                                slide,
+                                img_path=img_path,
+                                x=safe_left,
+                                y=safe_top,
+                                cx=ph_width,
+                                cy=safe_height,
+                            )
 
                     # Optional override for templates where the picture placeholder is too small.
                     if bool(config.get("expand_image_to_content_box")):
@@ -1555,7 +2137,7 @@ class PPTXGenerator:
             w_in, h_in = self._slide_size_inches()
             # Keep caption above footer/logo area for templates.
             if self.template_path and self.theme_name == "template":
-                caption_y = h_in - 0.95
+                caption_y = h_in - 1.20
                 cap_h = 0.28
             else:
                 caption_y = h_in - 0.65
@@ -1806,6 +2388,13 @@ class PPTXGenerator:
         return False
 
     def _get_best_body_placeholder(self, slide):
+        candidates = self._get_body_placeholders(slide)
+        if not candidates:
+            return None
+
+        return max(candidates, key=lambda shape: int(shape.width) * int(shape.height))
+
+    def _get_body_placeholders(self, slide) -> list:
         body_types = {
             PP_PLACEHOLDER.BODY,
             PP_PLACEHOLDER.OBJECT,
@@ -1819,11 +2408,7 @@ class PPTXGenerator:
                     candidates.append(placeholder)
             except Exception:
                 continue
-
-        if not candidates:
-            return None
-
-        return max(candidates, key=lambda shape: int(shape.width) * int(shape.height))
+        return candidates
 
     def _fill_text_frame(self, text_frame, lines: list[str], as_bullets: bool) -> None:
         text_frame.clear()
@@ -1852,10 +2437,12 @@ class PPTXGenerator:
         for i, line in enumerate(lines):
             paragraph = text_frame.paragraphs[0] if i == 0 else text_frame.add_paragraph()
             cleaned = line.lstrip()
-            if as_bullets and cleaned.startswith("•"):
+            if cleaned.startswith("•"):
                 cleaned = cleaned.lstrip("•").lstrip()
             paragraph.text = cleaned
             if as_bullets:
+                paragraph.level = 0
+            else:
                 paragraph.level = 0
             try:
                 paragraph.font.size = base_size
@@ -1878,6 +2465,28 @@ class PPTXGenerator:
 
         slide_width = int(self.prs.slide_width)
         midpoint = slide_width / 2
+
+        # Prefer largest text placeholders on opposite halves to avoid filling tiny/aux placeholders.
+        def center_x(ph) -> float:
+            return int(ph.left) + int(ph.width) / 2
+
+        left_main = [p for p in text_placeholders if center_x(p) < midpoint]
+        right_main = [p for p in text_placeholders if center_x(p) > midpoint]
+        if left_main and right_main:
+            left_primary = max(left_main, key=lambda p: int(p.width) * int(p.height))
+            right_primary = max(right_main, key=lambda p: int(p.width) * int(p.height))
+            self._fill_text_frame(
+                left_primary.text_frame,
+                left_text.split("\n") if left_text else [""],
+                as_bullets=False,
+            )
+            self._fill_text_frame(
+                right_primary.text_frame,
+                right_text.split("\n") if right_text else [""],
+                as_bullets=False,
+            )
+            return True
+
         left_side = [p for p in text_placeholders if int(p.left) < midpoint]
         right_side = [p for p in text_placeholders if int(p.left) >= midpoint]
 
@@ -2173,6 +2782,270 @@ class PPTXGenerator:
                     ay = y0 + box_h // 2
                     draw.line([(ax1, ay), (ax2, ay)], fill=accent_rgb, width=5)
                     draw.polygon([(ax2, ay), (ax2 - 12, ay - 9), (ax2 - 12, ay + 9)], fill=accent_rgb)
+
+        elif kind in {"ui-dashboard", "react-ui", "dashboard-ui", "app-screenshot"}:
+            def mix(c1: tuple[int, int, int], c2: tuple[int, int, int], t: float) -> tuple[int, int, int]:
+                t = max(0.0, min(1.0, t))
+                return tuple(int(c1[i] * (1 - t) + c2[i] * t) for i in range(3))
+
+            def luma(rgb: tuple[int, int, int]) -> float:
+                r, g, b = rgb
+                return 0.299 * r + 0.587 * g + 0.114 * b
+
+            bg_is_dark = luma(bg_rgb) < 120
+            if bg_is_dark:
+                top_bg = mix(bg_rgb, (255, 255, 255), 0.03)
+                frame_bg = mix(bg_rgb, (255, 255, 255), 0.05)
+                surface = mix(bg_rgb, (255, 255, 255), 0.10)
+                surface_alt = mix(bg_rgb, (255, 255, 255), 0.15)
+                text_primary = mix(text_rgb, (255, 255, 255), 0.05)
+                text_secondary = mix(text_rgb, (200, 215, 235), 0.35)
+            else:
+                top_bg = mix(bg_rgb, (0, 0, 0), 0.03)
+                frame_bg = mix(bg_rgb, (0, 0, 0), 0.05)
+                surface = mix(bg_rgb, (0, 0, 0), 0.06)
+                surface_alt = mix(bg_rgb, (0, 0, 0), 0.10)
+                text_primary = mix(text_rgb, (10, 20, 35), 0.18)
+                text_secondary = mix(text_rgb, (60, 80, 105), 0.30)
+
+            for y in range(h_px):
+                t = y / max(1, h_px - 1)
+                row = mix(top_bg, frame_bg, t)
+                draw.line([(0, y), (w_px, y)], fill=row)
+
+            pad = int(min(w_px, h_px) * 0.035)
+            frame = [pad, pad, w_px - pad, h_px - pad]
+            draw.rounded_rectangle(frame, radius=max(16, int(pad * 0.7)), fill=frame_bg, outline=accent_rgb, width=3)
+
+            fx0, fy0, fx1, fy1 = frame
+            fw = fx1 - fx0
+            fh = fy1 - fy0
+            gap = max(10, int(min(w_px, h_px) * 0.012))
+            top_h = int(fh * 0.12)
+            side_w = int(fw * 0.21)
+
+            top_rect = [fx0 + 2, fy0 + 2, fx1 - 2, fy0 + top_h]
+            draw.rounded_rectangle(top_rect, radius=max(10, int(pad * 0.35)), fill=surface_alt)
+
+            side_rect = [fx0 + 2, fy0 + top_h + gap, fx0 + side_w, fy1 - 2]
+            draw.rounded_rectangle(side_rect, radius=max(10, int(pad * 0.35)), fill=surface)
+
+            brand = str(spec.get("app_title") or "AutoBidding Console").strip()
+            pfont = try_font(max(18, int(min(w_px, h_px) * 0.028)))
+            sfont = try_font(max(12, int(min(w_px, h_px) * 0.020)))
+            tiny_font = try_font(max(10, int(min(w_px, h_px) * 0.016)))
+
+            draw.ellipse(
+                [fx0 + gap, fy0 + gap // 2, fx0 + gap + int(top_h * 0.52), fy0 + gap // 2 + int(top_h * 0.52)],
+                fill=accent_rgb,
+            )
+            draw.text((fx0 + gap + int(top_h * 0.7), fy0 + gap // 2), brand, fill=text_primary, font=sfont)
+
+            search_w = int(fw * 0.34)
+            search_h = int(top_h * 0.52)
+            search_x = fx0 + int(fw * 0.34)
+            search_y = fy0 + (top_h - search_h) // 2
+            draw.rounded_rectangle(
+                [search_x, search_y, search_x + search_w, search_y + search_h],
+                radius=max(8, int(search_h * 0.45)),
+                fill=surface,
+                outline=mix(accent_rgb, frame_bg, 0.65),
+                width=2,
+            )
+            draw.text((search_x + int(search_h * 0.38), search_y + int(search_h * 0.20)), "Search tenders...", fill=text_secondary, font=tiny_font)
+
+            chip_w = int(top_h * 0.56)
+            chip_h = chip_w
+            chip_x = fx1 - gap - chip_w
+            chip_y = fy0 + (top_h - chip_h) // 2
+            draw.rounded_rectangle(
+                [chip_x, chip_y, chip_x + chip_w, chip_y + chip_h],
+                radius=max(8, int(chip_w * 0.35)),
+                fill=mix(accent_rgb, frame_bg, 0.78),
+                outline=accent_rgb,
+                width=2,
+            )
+
+            nav_items = spec.get("sidebar_items") or [
+                "Workspace",
+                "Opportunities",
+                "Research",
+                "Drafting",
+                "Review",
+                "Exports",
+            ]
+            if not isinstance(nav_items, list):
+                nav_items = ["Workspace", "Opportunities", "Research", "Drafting", "Review", "Exports"]
+            nav_items = [str(x).strip() for x in nav_items if str(x).strip()]
+            if not nav_items:
+                nav_items = ["Workspace", "Opportunities", "Research", "Drafting", "Review", "Exports"]
+            active_idx = int(spec.get("active_nav_index") or 1)
+            nav_top = side_rect[1] + gap
+            nav_line_h = max(20, int((side_rect[3] - nav_top - gap) / max(len(nav_items), 6)))
+            for i, label in enumerate(nav_items[:8]):
+                y = nav_top + i * nav_line_h
+                is_active = i == active_idx
+                if is_active:
+                    draw.rounded_rectangle(
+                        [side_rect[0] + gap // 2, y - 2, side_rect[2] - gap // 2, y + nav_line_h - 4],
+                        radius=max(8, int(nav_line_h * 0.35)),
+                        fill=mix(accent_rgb, frame_bg, 0.75),
+                    )
+                ix = side_rect[0] + gap
+                iy = y + int(nav_line_h * 0.24)
+                isize = int(nav_line_h * 0.36)
+                draw.rounded_rectangle(
+                    [ix, iy, ix + isize, iy + isize],
+                    radius=max(3, int(isize * 0.24)),
+                    fill=mix(accent_rgb, frame_bg, 0.45 if is_active else 0.65),
+                )
+                draw.text((ix + isize + gap // 2, y + int(nav_line_h * 0.16)), label, fill=text_primary, font=tiny_font)
+
+            content_x0 = side_rect[2] + gap
+            content_y0 = side_rect[1]
+            content_x1 = fx1 - gap
+            content_y1 = fy1 - gap
+            content_w = content_x1 - content_x0
+            content_h = content_y1 - content_y0
+
+            kpi_h = int(content_h * 0.23)
+            kpi_gap = gap
+            kpi_y = content_y0
+            kpi_cards = spec.get("kpi_cards") or [
+                {"title": "Win Rate", "value": "41%", "delta": "+5.2%"},
+                {"title": "Avg Cycle", "value": "2.8d", "delta": "-18%"},
+                {"title": "Active Bids", "value": "27", "delta": "+4"},
+            ]
+            if not isinstance(kpi_cards, list):
+                kpi_cards = []
+            if len(kpi_cards) < 3:
+                kpi_cards = [
+                    {"title": "Win Rate", "value": "41%", "delta": "+5.2%"},
+                    {"title": "Avg Cycle", "value": "2.8d", "delta": "-18%"},
+                    {"title": "Active Bids", "value": "27", "delta": "+4"},
+                ]
+
+            kpi_cols = 3
+            card_w = int((content_w - (kpi_cols - 1) * kpi_gap) / kpi_cols)
+            for i in range(kpi_cols):
+                card = kpi_cards[i] if i < len(kpi_cards) else {}
+                cx0 = content_x0 + i * (card_w + kpi_gap)
+                cy0 = kpi_y
+                cx1 = cx0 + card_w
+                cy1 = cy0 + kpi_h
+                draw.rounded_rectangle([cx0, cy0, cx1, cy1], radius=max(10, int(kpi_h * 0.18)), fill=surface_alt, outline=mix(accent_rgb, frame_bg, 0.55), width=2)
+                draw.text((cx0 + gap, cy0 + int(kpi_h * 0.14)), str(card.get("title") or f"Metric {i+1}"), fill=text_secondary, font=tiny_font)
+                draw.text((cx0 + gap, cy0 + int(kpi_h * 0.42)), str(card.get("value") or "--"), fill=text_primary, font=pfont)
+                draw.text((cx0 + gap, cy0 + int(kpi_h * 0.72)), str(card.get("delta") or ""), fill=accent_rgb, font=tiny_font)
+
+            lower_y0 = kpi_y + kpi_h + gap
+            lower_h = content_y1 - lower_y0
+            left_w = int(content_w * 0.57)
+            right_w = content_w - left_w - gap
+
+            board = [content_x0, lower_y0, content_x0 + left_w, lower_y0 + lower_h]
+            preview = [board[2] + gap, lower_y0, board[2] + gap + right_w, lower_y0 + lower_h]
+            draw.rounded_rectangle(board, radius=max(10, int(lower_h * 0.08)), fill=surface, outline=mix(accent_rgb, frame_bg, 0.62), width=2)
+            draw.rounded_rectangle(preview, radius=max(10, int(lower_h * 0.08)), fill=surface, outline=mix(accent_rgb, frame_bg, 0.62), width=2)
+
+            draw.text((board[0] + gap, board[1] + gap), "Workflow Board", fill=text_primary, font=sfont)
+            lanes = spec.get("lanes") or ["Research", "Drafting", "Review"]
+            if not isinstance(lanes, list):
+                lanes = ["Research", "Drafting", "Review"]
+            lanes = [str(x).strip() for x in lanes if str(x).strip()]
+            if len(lanes) < 3:
+                lanes = ["Research", "Drafting", "Review"]
+            lane_gap = gap
+            lane_top = board[1] + int(lower_h * 0.16)
+            lane_h = board[3] - lane_top - gap
+            lane_w = int((left_w - 2 * lane_gap - 2 * gap) / 3)
+            for i in range(3):
+                lx0 = board[0] + gap + i * (lane_w + lane_gap)
+                lx1 = lx0 + lane_w
+                draw.rounded_rectangle([lx0, lane_top, lx1, lane_top + lane_h], radius=max(8, int(lane_h * 0.06)), fill=mix(surface_alt, frame_bg, 0.35), outline=mix(accent_rgb, frame_bg, 0.72), width=2)
+                lane_label = lanes[i] if i < len(lanes) else f"Lane {i+1}"
+                draw.text((lx0 + int(lane_w * 0.08), lane_top + int(lane_h * 0.03)), lane_label, fill=text_secondary, font=tiny_font)
+                card_h = int(lane_h * 0.22)
+                for j in range(2):
+                    cy0 = lane_top + int(lane_h * 0.17) + j * (card_h + int(lane_h * 0.08))
+                    cy1 = cy0 + card_h
+                    draw.rounded_rectangle(
+                        [lx0 + int(lane_w * 0.08), cy0, lx1 - int(lane_w * 0.08), cy1],
+                        radius=max(6, int(card_h * 0.25)),
+                        fill=surface_alt,
+                        outline=mix(accent_rgb, frame_bg, 0.58),
+                        width=2,
+                    )
+                    draw.line(
+                        [(lx0 + int(lane_w * 0.12), cy0 + int(card_h * 0.35)), (lx1 - int(lane_w * 0.12), cy0 + int(card_h * 0.35))],
+                        fill=text_secondary,
+                        width=2,
+                    )
+                    draw.line(
+                        [(lx0 + int(lane_w * 0.12), cy0 + int(card_h * 0.62)), (lx0 + int(lane_w * 0.58), cy0 + int(card_h * 0.62))],
+                        fill=text_secondary,
+                        width=2,
+                    )
+
+            draw.text((preview[0] + gap, preview[1] + gap), "Proposal Preview", fill=text_primary, font=sfont)
+            table_top = preview[1] + int(lower_h * 0.16)
+            table = [preview[0] + gap, table_top, preview[2] - gap, preview[3] - gap]
+            draw.rounded_rectangle(table, radius=max(8, int(lower_h * 0.05)), fill=surface_alt, outline=mix(accent_rgb, frame_bg, 0.66), width=2)
+
+            headers = spec.get("table_headers") or ["Section", "Owner", "Status"]
+            if not isinstance(headers, list):
+                headers = ["Section", "Owner", "Status"]
+            headers = [str(x).strip() for x in headers if str(x).strip()]
+            if len(headers) < 2:
+                headers = ["Section", "Owner", "Status"]
+            rows = spec.get("table_rows") or [
+                ["Executive Summary", "Analyst A", "Ready"],
+                ["Pricing Approach", "Analyst B", "In Review"],
+                ["Delivery Model", "Analyst C", "Draft"],
+                ["Compliance Matrix", "Analyst D", "Ready"],
+            ]
+            if not isinstance(rows, list):
+                rows = []
+            rows_clean = []
+            for row in rows:
+                if isinstance(row, (list, tuple)):
+                    rows_clean.append([str(x).strip() for x in row])
+            if not rows_clean:
+                rows_clean = [
+                    ["Executive Summary", "Analyst A", "Ready"],
+                    ["Pricing Approach", "Analyst B", "In Review"],
+                    ["Delivery Model", "Analyst C", "Draft"],
+                    ["Compliance Matrix", "Analyst D", "Ready"],
+                ]
+
+            cols = max(2, len(headers))
+            tx0, ty0, tx1, ty1 = table
+            th = max(18, int((ty1 - ty0) * 0.16))
+            draw.rectangle([tx0 + 1, ty0 + 1, tx1 - 1, ty0 + th], fill=mix(surface, frame_bg, 0.20))
+
+            col_w = (tx1 - tx0) / cols
+            for i in range(1, cols):
+                x = int(tx0 + i * col_w)
+                draw.line([(x, ty0), (x, ty1)], fill=mix(accent_rgb, frame_bg, 0.70), width=1)
+            draw.line([(tx0, ty0 + th), (tx1, ty0 + th)], fill=mix(accent_rgb, frame_bg, 0.60), width=1)
+
+            for i, header in enumerate(headers[:cols]):
+                hx = int(tx0 + i * col_w + gap * 0.6)
+                draw.text((hx, ty0 + int(th * 0.22)), header, fill=text_secondary, font=tiny_font)
+
+            body_rows = min(5, len(rows_clean))
+            if body_rows > 0:
+                row_h = max(14, int((ty1 - (ty0 + th)) / body_rows))
+                for r in range(body_rows):
+                    y = int(ty0 + th + r * row_h)
+                    if r % 2 == 1:
+                        draw.rectangle([tx0 + 1, y, tx1 - 1, y + row_h], fill=mix(surface_alt, frame_bg, 0.24))
+                    draw.line([(tx0, y + row_h), (tx1, y + row_h)], fill=mix(accent_rgb, frame_bg, 0.74), width=1)
+                    row_data = rows_clean[r]
+                    for c in range(cols):
+                        cell = row_data[c] if c < len(row_data) else ""
+                        cx = int(tx0 + c * col_w + gap * 0.6)
+                        draw.text((cx, y + int(row_h * 0.20)), cell, fill=text_primary, font=tiny_font)
 
         else:
             # Generic infographic: headline + a few accent blocks.
