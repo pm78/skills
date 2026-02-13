@@ -1,0 +1,4 @@
+interface:
+  display_name: "Strategy Intelligence Suite"
+  short_description: "Create strategy intelligence decks and plans"
+  default_prompt: "Use this skill to produce investor-ready strategy analysis and execute deck output via the installed pptx skill."
