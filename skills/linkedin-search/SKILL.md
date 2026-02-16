@@ -25,6 +25,7 @@ These tool names come from the LinkedIn MCP server (`FastMCP("linkedin_scraper")
 
 - Do not ask for or repeat passwords. Credentials must be provided to the server via env vars or a local credential file.
 - To avoid repeated 2FA, use a persistent Chrome profile directory (`LINKEDIN_PROFILE_DIR` or `--profile-dir`). Use separate directories per MCP client (e.g., Codex vs Claude Code) to avoid Chrome profile locking.
+- If WSL ChromeDriver cannot start, use MCP fallback via `LINKEDIN_FALLBACK_COMMAND` (typically a `powershell.exe` command) so the skill can still return company employees.
 - Prefer URL-based scraping for people/companies; this server does not provide keyword search for people/companies.
 - Use `get_employees=True` only with explicit user confirmation due to time and rate-limit risk.
 - Call `close_session()` only when finished with LinkedIn for this conversation (or after errors) to keep the session reusable.
@@ -61,6 +62,8 @@ These tool names come from the LinkedIn MCP server (`FastMCP("linkedin_scraper")
 
 - If tools return auth or empty results, run the server once interactively (visible Chrome) to complete login; see `references/setup.md`.
 - If ChromeDriver issues occur, set `CHROMEDRIVER` to a matching chromedriver binary and retry.
+- If ChromeDriver fails in WSL with status `127`, look for `error_code=CHROMEDRIVER_BOOT_FAILED` and `fallback_command` in the tool response, then run that command via the shell to fetch employees.
+- Optionally, set `LINKEDIN_FALLBACK_EXEC=1` if you want the MCP server itself to execute the fallback (not always supported in WSL).
 - If you see repeated login/2FA prompts, configure `LINKEDIN_PROFILE_DIR` so cookies and device trust persist across runs.
 
 ## Compliance note
