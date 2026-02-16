@@ -359,7 +359,7 @@ def build_agent_payload(spec: Dict[str, Any]) -> Dict[str, Any]:
 
     llm_id = _coalesce(retell.get("llmId"), retell.get("llm_id"), "llm_replace_me")
     agent_name = _coalesce(campaign.get("assistantName"), campaign.get("name"), "Outbound B2B Appointment Setter")
-    voice_id = _coalesce(retell.get("voiceId"), retell.get("voice_id"), "11labs-Adrian")
+    voice_id = _coalesce(retell.get("voiceId"), retell.get("voice_id"), "cartesia-Emma")
     language = _coalesce(campaign.get("language"), retell.get("language"), "fr-FR")
 
     payload: Dict[str, Any] = {

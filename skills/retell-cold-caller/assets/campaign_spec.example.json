@@ -72,7 +72,7 @@
   "retell": {
     "baseUrl": "https://api.retellai.com",
     "llmId": "llm_replace_me",
-    "voiceId": "11labs-Adrian",
+    "voiceId": "cartesia-Emma",
     "language": "fr-FR",
     "mode": "dynamic",
     "webhookUrl": "https://example.com/webhooks/retell",

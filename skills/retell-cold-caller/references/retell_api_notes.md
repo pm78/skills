@@ -67,6 +67,38 @@ Use this for testing agents before setting up telephony.
 }
 ```
 
+## Voice selection for France (important)
+
+For French metropolitan (France) accent, **use Cartesia voices, not MiniMax or ElevenLabs**.
+
+### Verified French voices (tested, confirmed France accent)
+
+| voice_id | Name | Provider | Gender | Accent |
+|---|---|---|---|---|
+| `cartesia-Emma` | Emma | Cartesia | female | France (recommended) |
+| `cartesia-Pierre` | Pierre | Cartesia | male | France |
+| `cartesia-Hailey-French` | Hailey - French | Cartesia | female | France |
+
+### Voices to avoid for France
+
+| voice_id | Provider | Problem |
+|---|---|---|
+| `minimax-Camille` | MiniMax | Preview sounds French, but runtime produces Canadian/American accent. MiniMax is fundamentally a US/Chinese TTS engine. |
+| `minimax-Louis` | MiniMax | Same issue — tagged French but accent drifts at runtime. |
+| `11labs-*` | ElevenLabs | Many voices labeled "French" are trained on Canadian French speakers. Hard to distinguish in the catalog. |
+
+### Voice parameters (recommended for France)
+
+- `voice_temperature`: **0.7** (keep low — high values like 1.5+ cause accent drift)
+- `voice_speed`: **1.0** (natural pace)
+
+### Accent reinforcement in LLM prompt
+
+Add this to the agent's system prompt identity section:
+```
+Tu parles avec un accent français métropolitain (France), jamais avec un accent québécois ou canadien. Utilise un registre professionnel parisien.
+```
+
 ## Agent payload shape (typical)
 
 ```json
@@ -76,8 +108,10 @@ Use this for testing agents before setting up telephony.
     "type": "retell-llm",
     "llm_id": "llm_xxx"
   },
-  "voice_id": "11labs-Adrian",
+  "voice_id": "cartesia-Emma",
   "language": "fr-FR",
+  "voice_temperature": 0.7,
+  "voice_speed": 1.0,
   "begin_message": "Bonjour, ici Camille de ACME. Est-ce que je vous dérange ?",
   "webhook_url": "https://your-app.example/webhooks/retell",
   "enable_voicemail_detection": true,
