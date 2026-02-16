@@ -504,12 +504,11 @@ def _make_curl_create_agent(base_url: str, agent_json_path: str) -> str:
 
 
 def _make_curl_list_agents(base_url: str, *, limit: int, offset: int) -> str:
-    query = urllib.parse.urlencode({"limit": int(limit), "offset": int(offset)})
     return "\n".join(
         [
             "# List Retell agents",
             "curl -sS \\",
-            f"  -X GET '{base_url.rstrip('/')}/list-agents?{query}' \\",
+            f"  -X GET '{base_url.rstrip('/')}/list-agents' \\",
             "  -H 'Authorization: Bearer '" + '"$RETELL_API_KEY"' + " \\",
             "  -H 'Accept: application/json'",
             "",
@@ -522,10 +521,51 @@ def _make_curl_create_call(base_url: str, payload: Dict[str, Any]) -> str:
         [
             "# Create outbound phone call",
             "curl -sS \\",
-            f"  -X POST '{base_url.rstrip('/')}/create-phone-call' \\",
+            f"  -X POST '{base_url.rstrip('/')}/v2/create-phone-call' \\",
             "  -H 'Authorization: Bearer '" + '"$RETELL_API_KEY"' + " \\",
             "  -H 'Content-Type: application/json' \\",
             "  -d '" + json.dumps(payload, ensure_ascii=False) + "'",
+            "",
+        ]
+    )
+
+
+def _make_curl_create_web_call(base_url: str, payload: Dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# Create web call (browser-based, no phone number needed)",
+            "curl -sS \\",
+            f"  -X POST '{base_url.rstrip('/')}/v2/create-web-call' \\",
+            "  -H 'Authorization: Bearer '" + '"$RETELL_API_KEY"' + " \\",
+            "  -H 'Content-Type: application/json' \\",
+            "  -d '" + json.dumps(payload, ensure_ascii=False) + "'",
+            "",
+        ]
+    )
+
+
+def _make_curl_import_number(base_url: str, payload: Dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# Import phone number (BYO telephony via SIP trunk)",
+            "curl -sS \\",
+            f"  -X POST '{base_url.rstrip('/')}/import-phone-number' \\",
+            "  -H 'Authorization: Bearer '" + '"$RETELL_API_KEY"' + " \\",
+            "  -H 'Content-Type: application/json' \\",
+            "  -d '" + json.dumps(payload, ensure_ascii=False) + "'",
+            "",
+        ]
+    )
+
+
+def _make_curl_list_numbers(base_url: str) -> str:
+    return "\n".join(
+        [
+            "# List phone numbers",
+            "curl -sS \\",
+            f"  -X GET '{base_url.rstrip('/')}/list-phone-numbers' \\",
+            "  -H 'Authorization: Bearer '" + '"$RETELL_API_KEY"' + " \\",
+            "  -H 'Accept: application/json'",
             "",
         ]
     )
@@ -1393,7 +1433,7 @@ def _execute_call(
     watchdog: Dict[str, Any],
     report_paths: Sequence[str],
 ) -> Dict[str, Any]:
-    status, body = _retell_request(method="POST", base_url=base_url, path="/create-phone-call", api_key=api_key, payload=payload)
+    status, body = _retell_request(method="POST", base_url=base_url, path="/v2/create-phone-call", api_key=api_key, payload=payload)
     result["http"]["create_call_status"] = status
     result["raw"]["create_call_response"] = body
 
@@ -1576,7 +1616,7 @@ def cmd_list_agents(args: argparse.Namespace) -> int:
     status, body = _retell_request(
         method="GET",
         base_url=base_url,
-        path=f"/list-agents?limit={limit}&offset={offset}",
+        path=f"/list-agents",
         api_key=api_key,
     )
     if not (200 <= status < 300):
@@ -1975,6 +2015,169 @@ def cmd_start_calls(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_web_call(args: argparse.Namespace) -> int:
+    """Create a browser-based web call (no phone number needed)."""
+    base_url = args.base_url.rstrip("/")
+
+    payload: Dict[str, Any] = {"agent_id": args.agent_id.strip()}
+
+    if args.agent_version is not None:
+        payload["agent_version"] = int(args.agent_version)
+
+    dynamic_vars = _parse_kv_pairs(args.var)
+    if dynamic_vars:
+        payload["retell_llm_dynamic_variables"] = dynamic_vars
+
+    metadata = _parse_kv_pairs(args.meta)
+    if metadata:
+        payload["metadata"] = metadata
+
+    print(_make_curl_create_web_call(base_url, payload))
+
+    if not args.execute:
+        print("[DRY RUN] Pass --execute to create a web call via Retell.")
+        print("[INFO] Web calls run in your browser — no phone number or SIP trunk required.")
+        print("[INFO] Useful for testing your agent before setting up telephony for France.")
+        return 0
+
+    api_key = os.environ.get("RETELL_API_KEY", "").strip()
+    if not api_key:
+        print("[ERROR] RETELL_API_KEY is required for --execute", file=sys.stderr)
+        return 2
+
+    status, body = _retell_request(
+        method="POST", base_url=base_url, path="/v2/create-web-call", api_key=api_key, payload=payload
+    )
+    print(f"[HTTP {status}]")
+
+    if not (200 <= status < 300):
+        print(f"[ERROR] {body}", file=sys.stderr)
+        return 1
+
+    parsed = _safe_json_loads(body)
+    if isinstance(parsed, dict):
+        call_id = _coalesce(str(parsed.get("call_id") or ""))
+        access_token = _coalesce(str(parsed.get("access_token") or ""))
+        call_type = _coalesce(str(parsed.get("call_type") or ""))
+        print(f"[OK] call_type={call_type} call_id={call_id}")
+        if access_token:
+            print(f"[OK] access_token={access_token}")
+            print()
+            print("Next steps:")
+            print("  1. Use the Retell Web SDK in your frontend with this access_token")
+            print("  2. Or test directly in the Retell dashboard under 'Test Agent'")
+            print(f"  3. The call_id for tracking: {call_id}")
+    else:
+        print(body)
+    return 0
+
+
+def cmd_import_number(args: argparse.Namespace) -> int:
+    """Import a phone number into Retell via SIP trunk (BYO telephony)."""
+    base_url = args.base_url.rstrip("/")
+
+    payload: Dict[str, Any] = {
+        "phone_number": args.phone_number.strip(),
+        "termination_uri": args.termination_uri.strip(),
+    }
+
+    if args.sip_username:
+        payload["sip_trunk_auth_username"] = args.sip_username.strip()
+    if args.sip_password:
+        payload["sip_trunk_auth_password"] = args.sip_password.strip()
+
+    if args.outbound_agent_id:
+        payload["outbound_agent_id"] = args.outbound_agent_id.strip()
+    if args.inbound_agent_id:
+        payload["inbound_agent_id"] = args.inbound_agent_id.strip()
+
+    if args.nickname:
+        payload["nickname"] = args.nickname.strip()
+
+    if args.transport:
+        payload["transport"] = args.transport.upper()
+
+    print(_make_curl_import_number(base_url, payload))
+
+    if not args.execute:
+        print("[DRY RUN] Pass --execute to import this number into Retell.")
+        print()
+        print("Prerequisites for France-to-France calling:")
+        print("  1. Buy a French number (+33) on Twilio or Telnyx")
+        print("  2. Create an Elastic SIP Trunk in Twilio with termination URI")
+        print("  3. Set up SIP auth credentials (username/password)")
+        print("  4. Run this command with --execute to import the number into Retell")
+        print("  5. Then use call-one/start-calls with --from-number set to this number")
+        return 0
+
+    api_key = os.environ.get("RETELL_API_KEY", "").strip()
+    if not api_key:
+        print("[ERROR] RETELL_API_KEY is required for --execute", file=sys.stderr)
+        return 2
+
+    status, body = _retell_request(
+        method="POST", base_url=base_url, path="/import-phone-number", api_key=api_key, payload=payload
+    )
+    print(f"[HTTP {status}]")
+
+    if not (200 <= status < 300):
+        print(f"[ERROR] {body}", file=sys.stderr)
+        return 1
+
+    parsed = _safe_json_loads(body)
+    if isinstance(parsed, dict):
+        phone = _coalesce(str(parsed.get("phone_number") or ""))
+        phone_id = _coalesce(str(parsed.get("phone_number_id") or ""))
+        print(f"[OK] Imported {phone} (id={phone_id})")
+        print(f"[OK] You can now use --from-number {phone} with call-one and start-calls")
+    else:
+        print(body)
+    return 0
+
+
+def cmd_list_numbers(args: argparse.Namespace) -> int:
+    """List phone numbers registered in Retell."""
+    base_url = args.base_url.rstrip("/")
+
+    print(_make_curl_list_numbers(base_url))
+
+    if not args.execute:
+        print("[DRY RUN] Pass --execute to list numbers from Retell.")
+        return 0
+
+    api_key = os.environ.get("RETELL_API_KEY", "").strip()
+    if not api_key:
+        print("[ERROR] RETELL_API_KEY is required for --execute", file=sys.stderr)
+        return 2
+
+    status, body = _retell_request(
+        method="GET", base_url=base_url, path="/list-phone-numbers", api_key=api_key
+    )
+    if not (200 <= status < 300):
+        print(f"[HTTP {status}] {body}")
+        return 1
+
+    data = _safe_json_loads(body)
+    if not isinstance(data, list):
+        print(body)
+        return 0
+
+    if not data:
+        print("[INFO] No phone numbers found. Use import-number to add a French number via SIP trunk.")
+        return 0
+
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        phone = _coalesce(str(item.get("phone_number") or ""))
+        phone_id = _coalesce(str(item.get("phone_number_id") or ""))
+        nickname = _coalesce(str(item.get("nickname") or ""))
+        inbound = _coalesce(str(item.get("inbound_agent_id") or ""))
+        outbound = _coalesce(str(item.get("outbound_agent_id") or ""))
+        print(f"{phone}\tid={phone_id}\tnickname={nickname}\tinbound_agent={inbound}\toutbound_agent={outbound}")
+    return 0
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(prog="retell_campaign.py")
     parser.add_argument("--env-file", help="Optional path to .env file.")
@@ -1998,6 +2201,36 @@ def main(argv: Optional[List[str]] = None) -> int:
     p_list.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Retell API base URL")
     p_list.add_argument("--execute", action="store_true", help="Actually call Retell API")
     p_list.set_defaults(func=cmd_list_agents)
+
+    # -- Web call (browser-based, no phone number needed) --
+    p_web = sub.add_parser("web-call", help="Create a browser-based web call (no phone number needed, ideal for testing)")
+    p_web.add_argument("--agent-id", required=True, help="Retell agent id")
+    p_web.add_argument("--agent-version", type=int, help="Optional specific agent version")
+    p_web.add_argument("--var", action="append", default=[], help="Dynamic vars key=value (repeatable)")
+    p_web.add_argument("--meta", action="append", default=[], help="Metadata key=value (repeatable)")
+    p_web.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Retell API base URL")
+    p_web.add_argument("--execute", action="store_true", help="Actually call Retell API")
+    p_web.set_defaults(func=cmd_web_call)
+
+    # -- Import number (BYO telephony via SIP trunk) --
+    p_import = sub.add_parser("import-number", help="Import a phone number into Retell via SIP trunk (for BYO telephony)")
+    p_import.add_argument("--phone-number", required=True, help="Phone number in E.164 format (e.g. +33140000000)")
+    p_import.add_argument("--termination-uri", required=True, help="SIP trunk termination URI (e.g. yourtrunk.pstn.twilio.com)")
+    p_import.add_argument("--sip-username", help="SIP trunk auth username")
+    p_import.add_argument("--sip-password", help="SIP trunk auth password")
+    p_import.add_argument("--outbound-agent-id", help="Default agent for outbound calls on this number")
+    p_import.add_argument("--inbound-agent-id", help="Default agent for inbound calls on this number")
+    p_import.add_argument("--nickname", help="Friendly label for this number")
+    p_import.add_argument("--transport", choices=["TLS", "TCP", "UDP"], default="TCP", help="SIP transport protocol (default: TCP)")
+    p_import.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Retell API base URL")
+    p_import.add_argument("--execute", action="store_true", help="Actually call Retell API")
+    p_import.set_defaults(func=cmd_import_number)
+
+    # -- List numbers --
+    p_nums = sub.add_parser("list-numbers", help="List phone numbers registered in Retell")
+    p_nums.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Retell API base URL")
+    p_nums.add_argument("--execute", action="store_true", help="Actually call Retell API")
+    p_nums.set_defaults(func=cmd_list_numbers)
 
     p_one = sub.add_parser("call-one", help="Start one outbound call (prints curl by default)")
     p_one.add_argument("--agent-id", required=True, help="Retell agent id")

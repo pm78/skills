@@ -2,9 +2,30 @@
 
 ## 1) Prerequisites
 
-- `RETELL_API_KEY` set in environment or `.env`.
-- BYO telephony configured and caller number active for outbound to `+33`.
+- `RETELL_API_KEY` set in `retell-cold-caller/.env` (not the parent directory).
 - Suppression list available (even if empty at pilot start).
+- For phone calls: BYO telephony configured and French number imported (see step 1b).
+- For web-call testing: no telephony setup needed.
+
+### 1b) Telephony setup (for phone calls only)
+
+If you need to make real phone calls (not just web-call testing), set up BYO telephony first:
+
+```bash
+# Check if you already have numbers imported
+python3 scripts/retell_campaign.py list-numbers --execute
+
+# If not, import a French number from Twilio/Telnyx
+python3 scripts/retell_campaign.py import-number \
+  --phone-number "+33140000000" \
+  --termination-uri "yourtrunk.pstn.twilio.com" \
+  --sip-username "your_username" \
+  --sip-password "your_password" \
+  --nickname "FR-outbound" \
+  --execute
+```
+
+See `references/setup_france_telephony.md` for the full Twilio SIP trunk setup.
 
 ## 2) Generate assets
 
@@ -30,7 +51,30 @@ python3 scripts/retell_campaign.py create-agent \
 
 Capture returned `agent_id`.
 
-## 4) Internal pilot calls first
+Or list existing agents:
+
+```bash
+python3 scripts/retell_campaign.py list-agents --execute
+```
+
+## 4) Web call test (recommended first step)
+
+Before using real phone numbers, validate your agent with a browser-based web call:
+
+```bash
+python3 scripts/retell_campaign.py web-call \
+  --agent-id <agent_id> \
+  --execute
+```
+
+This returns an `access_token`. Test the agent in the Retell dashboard under "Test Agent", or use the Retell Web SDK in a frontend.
+
+Check:
+- Does the opener sound natural?
+- Does the agent handle objections correctly?
+- Does opt-out handling work?
+
+## 5) Internal pilot phone calls
 
 Use internal numbers before prospect calls.
 
@@ -43,11 +87,10 @@ python3 scripts/retell_campaign.py call-one \
   --meta campaign=fr-b2b-internal \
   --fr-policy \
   --wait-report \
-  --report-path-template /get-phone-call/{call_id} \
   --execute
 ```
 
-## 5) Small external pilot (5-10 leads)
+## 6) Small external pilot (5-10 leads)
 
 ```bash
 python3 scripts/retell_campaign.py start-calls \
@@ -60,7 +103,6 @@ python3 scripts/retell_campaign.py start-calls \
   --fr-policy \
   --fr-policy-state /path/to/fr_policy_state.json \
   --wait-report \
-  --report-path-template /get-phone-call/{call_id} \
   --limit 10 \
   --sleep-seconds 20 \
   --out-jsonl /tmp/retell_payloads.jsonl \
@@ -70,7 +112,7 @@ python3 scripts/retell_campaign.py start-calls \
   --verbose
 ```
 
-## 6) QA scorecard per call
+## 7) QA scorecard per call
 
 - Opener clarity (first 10 seconds)
 - Correct identity and purpose disclosure
@@ -78,7 +120,7 @@ python3 scripts/retell_campaign.py start-calls \
 - Opt-out handling and suppression update
 - Next-step capture quality (booked, callback, no-interest)
 
-## 7) Iterate prompt and rerun
+## 8) Iterate prompt and rerun
 
 - Tighten opener if too long.
 - Reduce question count if call feels robotic.

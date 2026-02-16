@@ -11,6 +11,53 @@ Design and run B2B outbound appointment-setting campaigns using Retell with BYO 
 
 This skill is operational guidance, not legal advice.
 
+## Environment setup
+
+1. Get your API key from the [Retell dashboard](https://www.retellai.com/) (Settings > API Keys)
+2. Create a `.env` file **in the skill root directory** (`retell-cold-caller/.env`):
+
+```
+RETELL_API_KEY=key_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+The script loads `.env` from: skill root dir, then current working dir, then `--env-file` path. Shell environment takes priority.
+
+## Quick Start for France
+
+Retell only sells US/Canada numbers. For France-to-France calling, follow one of these paths:
+
+### Path A: Test your agent immediately (no phone number needed)
+
+```bash
+python scripts/retell_campaign.py web-call --agent-id agent_xxx --execute
+```
+
+This creates a browser-based call — no SIP trunk or Twilio account required. Test in the Retell dashboard under "Test Agent".
+
+### Path B: Production France-to-France phone calls
+
+1. Buy a +33 number on Twilio and create an Elastic SIP Trunk with auth credentials
+2. Import it: `scripts/retell_campaign.py import-number --phone-number "+33..." --termination-uri "yourtrunk.pstn.twilio.com" --sip-username "..." --sip-password "..." --execute`
+3. Verify: `scripts/retell_campaign.py list-numbers --execute`
+4. Call: `scripts/retell_campaign.py call-one --agent-id agent_xxx --from-number "+33..." --to-number "+33..." --execute`
+
+See `references/setup_france_telephony.md` for the full step-by-step guide.
+
+## Available subcommands
+
+| Subcommand | Purpose |
+|---|---|
+| `generate` | Create agent payload + talk track + call template + curl templates from campaign spec |
+| `create-agent` | Create a voice agent in Retell |
+| `list-agents` | List existing Retell agents |
+| `web-call` | Create a browser-based web call (no phone number needed — ideal for testing) |
+| `import-number` | Import a phone number into Retell via SIP trunk (BYO telephony) |
+| `list-numbers` | List phone numbers registered in Retell |
+| `call-one` | Place a single outbound phone call |
+| `start-calls` | Batch outbound calls from a leads CSV |
+
+All subcommands default to **dry-run** (print curl, no API call). Add `--execute` for live actions.
+
 ## Workflow
 
 ### Step 0: Gather campaign inputs
@@ -100,6 +147,7 @@ Verify in pilot calls:
 ## Resource map
 
 - `scripts/retell_campaign.py`: Generate payloads, print curl, optionally execute Retell API calls.
+- `references/setup_france_telephony.md`: **Start here** — step-by-step guide to set up France-to-France calling.
 - `references/compliance_checklist_fr.md`: France/B2B compliance checklist with official links.
 - `references/examples_b2b_fr.md`: French discovery-first talk-track examples.
 - `references/retell_api_notes.md`: Minimal Retell endpoints/payload notes.

@@ -8,14 +8,64 @@ Auth header:
 
 - `Authorization: Bearer $RETELL_API_KEY`
 
+## Environment setup
+
+Place your API key in a `.env` file **inside the skill root directory** (`retell-cold-caller/.env`):
+
+```
+RETELL_API_KEY=key_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+The script loads `.env` from (in order):
+1. Skill directory (parent of `scripts/`)
+2. Current working directory
+3. Explicit `--env-file` path
+
+Keys already set in the shell environment take priority over `.env` values.
+
 ## Core endpoints used by this skill
 
-- `POST /create-agent`
-- `GET /list-agents`
-- `POST /create-phone-call`
-- Optional report polling endpoint(s), configured by CLI:
-  - `--report-path-template` (default: `/get-phone-call/{call_id}`)
-  - `--report-path-fallback` for environment-specific variants
+| Subcommand | Method | Endpoint |
+|---|---|---|
+| `create-agent` | POST | `/create-agent` |
+| `list-agents` | GET | `/list-agents` |
+| `web-call` | POST | `/v2/create-web-call` |
+| `import-number` | POST | `/import-phone-number` |
+| `list-numbers` | GET | `/list-phone-numbers` |
+| `call-one` / `start-calls` | POST | `/v2/create-phone-call` |
+| report polling | GET | `/get-phone-call/{call_id}` (configurable) |
+
+### Endpoint gotchas (verified live)
+
+- `GET /list-agents` does **not** accept `offset` query parameter — just call it without pagination.
+- `POST /create-phone-call` must use the **v2** path (`/v2/create-phone-call`). The legacy path returns errors.
+- `from_number` in create-phone-call is **required** and must be a number already purchased from Retell **or imported** via `import-phone-number`.
+- Retell only sells **US/Canada** numbers. For France (+33), you must import via SIP trunk (see `references/setup_france_telephony.md`).
+
+## Web call payload (no phone number needed)
+
+```json
+{
+  "agent_id": "agent_xxx"
+}
+```
+
+Returns `access_token` for browser-based call via Retell Web SDK.
+Use this for testing agents before setting up telephony.
+
+## Import number payload (BYO telephony)
+
+```json
+{
+  "phone_number": "+33140000000",
+  "termination_uri": "yourtrunk.pstn.twilio.com",
+  "sip_trunk_auth_username": "your_username",
+  "sip_trunk_auth_password": "your_password",
+  "outbound_agent_id": "agent_xxx",
+  "nickname": "FR-outbound",
+  "transport": "TCP"
+}
+```
 
 ## Agent payload shape (typical)
 
@@ -36,7 +86,7 @@ Auth header:
 }
 ```
 
-Useful optional fields frequently seen in Retell docs/examples:
+Useful optional fields:
 
 - `max_call_duration_ms`
 - `ring_duration_ms`
@@ -46,12 +96,12 @@ Useful optional fields frequently seen in Retell docs/examples:
 - `analysis_successful_prompt`
 - `analysis_summary_prompt`
 
-## Call payload shape (typical)
+## Phone call payload shape (typical)
 
 ```json
 {
-  "from_number": "+331XXXXXXXX",
-  "to_number": "+33YYYYYYYYY",
+  "from_number": "+33140000000",
+  "to_number": "+33600000000",
   "override_agent_id": "agent_xxx",
   "retell_llm_dynamic_variables": {
     "first_name": "Ariane",
@@ -63,9 +113,17 @@ Useful optional fields frequently seen in Retell docs/examples:
 }
 ```
 
-## BYO telephony note
+`from_number` must be a number that exists in Retell (purchased or imported).
 
-For international outbound reliability (including France), prefer custom telephony with SIP trunking and imported/managed numbers rather than relying on default provisioned numbers.
+## BYO telephony — why it matters for France
+
+Retell only provisions US/Canada numbers for purchase. For any other country, including France, you must:
+
+1. Buy a number from Twilio or Telnyx
+2. Create a SIP trunk with that provider
+3. Import the number into Retell with `import-number`
+
+After import, the number appears in `list-numbers` and can be used as `from_number`.
 
 ## Runtime/reporting notes
 
@@ -81,5 +139,9 @@ For international outbound reliability (including France), prefer custom telepho
 - Create agent: https://docs.retellai.com/api-references/create-agent
 - List agents: https://docs.retellai.com/api-references/list-agents
 - Create phone call: https://docs.retellai.com/api-references/create-phone-call
+- Create web call: https://docs.retellai.com/api-references/create-web-call
+- Import phone number: https://docs.retellai.com/api-references/import-phone-number
+- International calling & fees: https://docs.retellai.com/deploy/international-call
 - Custom telephony: https://docs.retellai.com/deploy/custom-telephony
+- Twilio setup: https://docs.retellai.com/deploy/twilio
 - Language/voice: https://docs.retellai.com/build/set-language-and-voice
