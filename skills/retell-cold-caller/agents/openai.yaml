@@ -1,4 +1,0 @@
-interface:
-  display_name: "Retell Cold Caller"
-  short_description: "French-ready B2B Retell outbound calls"
-  default_prompt: "Build a compliant B2B outbound campaign with Retell and BYO telephony for French numbers."

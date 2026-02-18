@@ -294,6 +294,11 @@ body.dark,
   border-color: var(--ttt-gold-dark) !important;
 }
 
+.dark .btn-default:hover {
+  background: var(--ttt-bronze) !important;
+  color: #FFFFFF !important;
+}
+
 /* --- Keep header text white (over dark header image) --- */
 .dark .site-title,
 .dark .site-title a,
@@ -314,7 +319,7 @@ body {
   background-color: var(--ttt-bg) !important;
   color: var(--ttt-text) !important;
   font-family: var(--ttt-font-body) !important;
-  font-size: 18px;
+  font-size: 18px !important;
   line-height: var(--ttt-line-height);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -332,15 +337,30 @@ body {
 /* =========================================================
    3. TYPOGRAPHY & VISUAL HIERARCHY
    ========================================================= */
-h1, h2, h3, h4, h5, h6,
+/* Serif heading font only for h1/h2 (prominent titles) */
+h1, h2,
 .entry-title,
-.page-title,
-.wp-block-heading {
+.page-title {
   font-family: var(--ttt-font-heading) !important;
   color: var(--ttt-text);
   font-weight: 600;
   line-height: var(--ttt-heading-line);
   letter-spacing: -0.02em;
+  margin-top: var(--ttt-space-lg);
+  margin-bottom: var(--ttt-space-sm);
+}
+
+/* Sans-serif for h3–h6 to blend with body text */
+h3, h4, h5, h6,
+.wp-block-heading:where(h3),
+.wp-block-heading:where(h4),
+.wp-block-heading:where(h5),
+.wp-block-heading:where(h6) {
+  font-family: var(--ttt-font-body) !important;
+  color: var(--ttt-text);
+  font-weight: 700;
+  line-height: var(--ttt-heading-line);
+  letter-spacing: -0.01em;
   margin-top: var(--ttt-space-lg);
   margin-bottom: var(--ttt-space-sm);
 }
@@ -357,27 +377,105 @@ h2, .wp-block-heading:where(h2) {
 }
 
 h3 {
-  font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
 }
 
 h4 {
-  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
 }
 
 h5 {
-  font-size: 1.1rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ttt-muted);
 }
 
 h6 {
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--ttt-muted);
+}
+
+/* --- Read More / Continue Reading button --- */
+.btn-default,
+.btn-default:visited,
+.btn-default:link,
+.btn-default:active,
+.read-more,
+.read-more:visited,
+.more-link,
+.more-link:visited,
+a.btn-default,
+a.btn-default:visited,
+a.read-more,
+a.read-more:visited,
+a.more-link,
+a.more-link:visited,
+.dark .btn-default,
+.dark .btn-default:visited,
+.dark .read-more,
+.dark .read-more:visited,
+.dark .more-link,
+.dark .more-link:visited {
+  background: var(--ttt-gold-dark) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--ttt-gold-dark) !important;
+  border-radius: var(--ttt-radius);
+  padding: 0.5rem 1.2rem !important;
+  text-decoration: none !important;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.btn-default:hover,
+.read-more:hover,
+.more-link:hover,
+.dark .btn-default:hover,
+.dark .read-more:hover,
+.dark .more-link:hover {
+  background: var(--ttt-bronze) !important;
+  color: #FFFFFF !important;
+}
+
+/* --- Post navigation (Previous / Next) --- */
+.post-navigation,
+.posts-navigation,
+.post-navigation .nav-links,
+.posts-navigation .nav-links,
+.nav-previous,
+.nav-next,
+.next-post,
+.prev-post,
+.next-post a,
+.prev-post a,
+.post-navigation .nav-links a,
+.dark .nav-previous,
+.dark .nav-next,
+.dark .next-post,
+.dark .prev-post,
+.dark .next-post a,
+.dark .prev-post a,
+.dark .posts-navigation .nav-links,
+.dark .post-navigation .nav-links {
+  background: var(--ttt-surface) !important;
+  color: var(--ttt-text) !important;
+}
+
+.next-post a,
+.prev-post a,
+.post-navigation .nav-links a,
+.dark .next-post a,
+.dark .prev-post a {
+  color: var(--ttt-gold-dark) !important;
+}
+
+.next-prev-text,
+.dark .next-prev-text {
+  color: var(--ttt-muted) !important;
 }
 
 /* Gold accent bar under main titles */
@@ -395,14 +493,26 @@ h6 {
 /* --- Body Content --- */
 .entry-content,
 .entry-content p,
-.entry-content li,
+.entry-content li {
+  text-align: left !important;
+  line-height: var(--ttt-line-height);
+  color: var(--ttt-text) !important;
+  font-size: 1.05em !important;
+}
+
 .widget,
 .widget p,
 .widget li {
   text-align: left !important;
-  line-height: var(--ttt-line-height);
+  line-height: 1.5;
   color: var(--ttt-text) !important;
-  font-size: 1.2rem !important;
+  font-size: 14px !important;
+}
+
+.widget a {
+  font-size: 14px !important;
+  color: var(--ttt-gold-dark) !important;
+  line-height: 1.4;
 }
 
 .entry-content {
@@ -413,7 +523,7 @@ h6 {
 
 .entry-content p {
   margin-bottom: var(--ttt-space-md);
-  font-size: 1.2rem !important;
+  font-size: 1.05em !important;
 }
 
 /* Article excerpt / summary on homepage */
@@ -421,14 +531,14 @@ h6 {
 .entry-summary p,
 .post-card p,
 article .entry-summary {
-  font-size: 1.15rem !important;
+  font-size: 1em !important;
   line-height: var(--ttt-line-height);
   color: var(--ttt-text) !important;
 }
 
 /* Lead paragraph — slightly larger, softer */
 .entry-content > p:first-of-type {
-  font-size: 1.35rem !important;
+  font-size: 1.15em !important;
   color: var(--ttt-text-secondary);
   line-height: 1.7;
 }
@@ -524,11 +634,18 @@ nav.main-nav {
   width: 100%;
 }
 
-/* Header — preserve theme header image */
+/* Header — preserve theme header image, but cap height */
 .site-header,
 header#masthead {
   border-bottom: 1px solid var(--ttt-border);
   /* Do NOT override background — Nisarg uses an inline background-image */
+  max-height: 340px !important;
+  height: 340px !important;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Site title — keep white for dark header image */
@@ -729,17 +846,31 @@ article.type-post,
   box-shadow: var(--ttt-shadow);
 }
 
-/* Post meta */
+/* Post meta — Nisarg wraps metadata in h5 inside .entry-meta */
 .entry-meta,
-.post-meta,
-.byline,
-.posted-on {
-  font-family: var(--ttt-font-body);
-  font-size: 0.85rem;
-  color: var(--ttt-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.entry-meta *,
+.entry-meta h5,
+.entry-meta h5 *,
+.entry-meta h5 a,
+.entry-meta a,
+.entry-header .entry-meta,
+.entry-header .entry-meta *,
+.entry-header .entry-meta h5,
+.entry-header .entry-meta h5 a,
+body .entry-meta,
+body .entry-meta h5,
+body .entry-meta h5 a,
+.dark .entry-meta,
+.dark .entry-meta *,
+.dark .entry-meta h5,
+.dark .entry-meta h5 a {
+  font-family: var(--ttt-font-body) !important;
+  font-size: 15px !important;
+  color: var(--ttt-muted) !important;
+  letter-spacing: 0.04em;
   font-weight: 500;
+  text-transform: none !important;
+  margin: 0 !important;
 }
 
 /* Category & tag pills */
@@ -971,7 +1102,7 @@ aside.sidebar .widget-title,
 .sidebar .widget-title,
 body .widget-title {
   font-family: var(--ttt-font-heading) !important;
-  font-size: 1.3rem;
+  font-size: 16px;
   color: var(--ttt-text) !important;
   background: transparent !important;
   margin-bottom: var(--ttt-space-sm);
@@ -1070,7 +1201,13 @@ footer#colophon {
 /* --- Phones (up to 600px) --- */
 @media (max-width: 600px) {
   body {
-    font-size: 16px !important;
+    font-size: 18px !important;
+  }
+
+  .site-header,
+  header#masthead {
+    max-height: 200px !important;
+    height: 200px !important;
   }
 
   .entry-content {
@@ -1122,7 +1259,13 @@ footer#colophon {
 /* --- Tablets (601px – 1024px) --- */
 @media (min-width: 601px) and (max-width: 1024px) {
   body {
-    font-size: 17px !important;
+    font-size: 19px !important;
+  }
+
+  .site-header,
+  header#masthead {
+    max-height: 280px !important;
+    height: 280px !important;
   }
 
   .entry-content {
@@ -1165,4 +1308,78 @@ footer#colophon {
 
   a { color: black !important; }
   a::after { content: ' (' attr(href) ')'; font-size: 0.8em; }
+}
+
+/* =========================================================
+   HOTFIX: Read More Button Legibility (2026-02-18)
+   Enforce visible white text on Nisarg/Bootstrap read-more buttons
+   ========================================================= */
+p.read-more a.btn.btn-default,
+p.read-more a.btn.btn-default:link,
+p.read-more a.btn.btn-default:visited,
+p.read-more a.btn.btn-default:active,
+p.read-more a.btn.btn-default:focus,
+.entry-summary a.btn.btn-default,
+.entry-summary a.btn.btn-default:link,
+.entry-summary a.btn.btn-default:visited,
+a.more-link,
+a.more-link:link,
+a.more-link:visited,
+.more-link,
+.more-link:link,
+.more-link:visited,
+.dark p.read-more a.btn.btn-default,
+.dark .entry-summary a.btn.btn-default,
+.dark a.more-link,
+.dark .more-link {
+  background: var(--ttt-gold-dark) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--ttt-gold-dark) !important;
+  text-decoration: none !important;
+  text-shadow: none !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1.15 !important;
+  text-indent: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 2.2rem !important;
+  padding: 0.55rem 1.1rem !important;
+}
+
+p.read-more a.btn.btn-default *,
+.entry-summary a.btn.btn-default *,
+a.more-link *,
+.more-link * {
+  color: #FFFFFF !important;
+}
+
+p.read-more a.btn.btn-default:hover,
+p.read-more a.btn.btn-default:focus,
+.entry-summary a.btn.btn-default:hover,
+.entry-summary a.btn.btn-default:focus,
+a.more-link:hover,
+a.more-link:focus,
+.more-link:hover,
+.more-link:focus,
+.dark p.read-more a.btn.btn-default:hover,
+.dark .entry-summary a.btn.btn-default:hover,
+.dark a.more-link:hover,
+.dark .more-link:hover {
+  background: var(--ttt-bronze) !important;
+  border-color: var(--ttt-bronze) !important;
+  color: #FFFFFF !important;
+}
+
+p.read-more a.btn.btn-default::before,
+p.read-more a.btn.btn-default::after,
+.entry-summary a.btn.btn-default::before,
+.entry-summary a.btn.btn-default::after,
+a.more-link::before,
+a.more-link::after,
+.more-link::before,
+.more-link::after {
+  content: none !important;
 }

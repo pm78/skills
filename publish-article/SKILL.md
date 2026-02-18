@@ -7,7 +7,7 @@ description: Publish automation that finds the latest draft article in Notion `M
 
 ## Overview
 
-Publish one article per run: select the most recently edited row in `My Articles` where status matches `draft`, publish it to WordPress, then update Notion status to `published`.
+Publish one article per run: select the latest `draft` row in Notion `My Articles`, publish it to WordPress, update Notion status/platform fields, and optionally write a publication-log row in a `Publications` database.
 
 ## Required Environment
 
@@ -15,13 +15,44 @@ Set these variables before running the script:
 
 - `NOTION_TOKEN`
 - `MY_ARTICLES_DB_ID` (optional; defaults to your current DB ID)
-- `WP_USERNAME` (or `WORDPRESS_USERNAME` or `WP_APP_USERNAME`)
-- `WP_APP_PASSWORD` (or `WORDPRESS_APP_PASSWORD`)
 - `OPENAI_API_KEY` (needed when an article has no image and the script must generate one)
+- Site credentials used by `config/wp_sites.json`:
+  - `WP_USERNAME`
+  - `WP_APP_PASSWORD`
+  - `WP_LNC_USERNAME`
+  - `WP_LNC_APP_PASSWORD`
 
 Optional:
 
-- `WORDPRESS_SITE` (defaults to `https://thrivethroughtime.com`)
+- `PUBLICATIONS_DB_ID` (if set, create one publication log row per publish)
+- `WP_SITE_KEY` (target site key from config, for example `thrivethroughtime` or `lesnewsducoach`)
+- `DEFAULT_SITE_KEY` (fallback site key; default `thrivethroughtime`)
+- `WP_SITES_CONFIG` (path override; default `config/wp_sites.json`)
+- Legacy single-site fallback vars remain supported:
+  - `WORDPRESS_SITE` or `WP_URL`
+  - `WORDPRESS_USERNAME` or `WP_APP_USERNAME`
+  - `WORDPRESS_APP_PASSWORD`
+
+## Multi-Site Config
+
+Default registry file:
+
+- `config/wp_sites.json`
+
+Expected shape:
+
+```json
+{
+  "site_key": {
+    "wp_url": "https://example.com",
+    "username_env": "WP_SITE_USERNAME",
+    "password_env": "WP_SITE_APP_PASSWORD",
+    "platform_name": "WordPress-SiteName",
+    "notion_site_label": "site_label",
+    "aliases": ["optional alias", "optional domain"]
+  }
+}
+```
 
 ## Commands
 
@@ -35,6 +66,12 @@ Run live publish:
 
 ```bash
 python3 scripts/publish_latest_draft.py
+```
+
+Publish to a specific site key:
+
+```bash
+python3 scripts/publish_latest_draft.py --site lesnewsducoach
 ```
 
 Use custom status labels when needed:
@@ -53,6 +90,13 @@ python3 scripts/publish_latest_draft.py \
   --platform-name WordPress
 ```
 
+Write publication logs into a Notion Publications DB:
+
+```bash
+python3 scripts/publish_latest_draft.py \
+  --publications-db-id "$PUBLICATIONS_DB_ID"
+```
+
 Print machine-readable output:
 
 ```bash
@@ -68,6 +112,11 @@ python3 scripts/publish_latest_draft.py --skip-illustration
 ## Behavior
 
 - Auto-detect Notion properties for title, status, content, slug, and summary.
+- Auto-detect optional Notion target-site property (`Target Site`, `Publish Site`, `Site`, `Website`, etc.).
+- Resolve target site in this order:
+  - `--site` / `WP_SITE_KEY`
+  - article row target-site value
+  - `--default-site-key` / `DEFAULT_SITE_KEY`
 - Prefer content from a `Content` rich text field; fall back to Notion page blocks if empty.
 - Convert markdown content to clean HTML with headings, bold/italic, quotes, lists, code, and paragraphs.
 - Convert bare URLs and markdown links into clickable anchors.
@@ -83,11 +132,21 @@ python3 scripts/publish_latest_draft.py --skip-illustration
   - `published` when all required platforms are present in published platforms
   - `partially_published` otherwise
 - Also update `Publish Date` and URL property (`Published URL`, `WordPress URL`, `Post URL`, or `URL`) if present.
-- If a `Published Platforms`-style property exists (`Published Platforms`, `Published On`, `Platforms Published`, `Published To`, `Live On`), append this run's platform value (default: `WordPress`).
+- If a `Published Platforms`-style property exists (`Published Platforms`, `Published On`, `Platforms Published`, `Published To`, `Live On`), append this run's platform value.
 - Write generated/reused illustration URL back into a Notion image URL property when available.
+- If `PUBLICATIONS_DB_ID` is configured, create a publication row and map best-effort fields:
+  - title
+  - relation to article
+  - site/platform
+  - status (`Published`)
+  - published URL
+  - WP post ID
+  - published date
+  - illustration URL
 - Avoid duplicate top images by preferring WordPress `featured_media` placement when media ID is available.
 - Stop with a clear error if no draft article is found.
 
 ## Resource
 
 - `scripts/publish_latest_draft.py`: End-to-end Notion -> WordPress -> Notion publish pipeline.
+- `config/wp_sites.json`: Site registry for multi-site publishing.

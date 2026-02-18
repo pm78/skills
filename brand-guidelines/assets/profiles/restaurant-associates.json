@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "restaurant-associates",
+  "brand_name": "Restaurant Associates",
+  "captured_at": "2026-02-18T16:17:14.091764+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://www.restaurantassociates.co.uk"
+    },
+    {
+      "type": "asset",
+      "value": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/restaurant-associates-logo.svg"
+    }
+  ],
+  "logos": [
+    {
+      "path": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/restaurant-associates-logo.svg",
+      "source": "skill-asset:primary-logo"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#000000",
+      "count": 2
+    },
+    {
+      "hex": "#16232C",
+      "count": 1
+    }
+  ],
+  "fonts": [],
+  "guidelines": [
+    {
+      "title": "Delivered hospitality With our sister brands 'Grazing' and \u2018Table to Table\u2019, we bring exceptional food experiences directly to your workplace or venue. From elegant canap\u00e9s and fine dining plates to vibrant daytime catering, our menus are crafted with the finest ingredients and designed to suit every occasion. See our hospitality offers",
+      "url": "https://www.restaurantassociates.co.uk/services/delivered-hospitality/"
+    }
+  ],
+  "policies": [
+    {
+      "title": "Terms & Conditions",
+      "url": "https://www.compass-group.co.uk/terms-and-conditions/"
+    },
+    {
+      "title": "Cookie Policy",
+      "url": "https://compass-group.co.uk/cookie-policy/"
+    }
+  ],
+  "style_notes": [
+    "Preset generated from /tmp/restaurant-associates.profile.json"
+  ]
+}

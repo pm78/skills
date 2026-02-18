@@ -261,18 +261,50 @@ def ensure_code_snippets(api_base: str, auth: str) -> bool:
 
 
 def find_existing_snippet(api_base: str, auth: str, name_prefix: str) -> Optional[int]:
-    """Find an existing Code Snippets snippet by name prefix or auto-deployed tag."""
+    """Find an existing Code Snippets snippet by name prefix or auto-deployed tag.
+
+    Also deactivates any duplicate/old style-pack snippets to prevent conflicts
+    (e.g. old snippets that override the header background).
+    """
     url = f"{api_base}/wp-json/code-snippets/v1/snippets"
     snippets, err = wp_request_safe(url, auth=auth)
     if not snippets or not isinstance(snippets, list):
         return None
+
+    # Collect all matching snippets
+    matches: List[Dict[str, Any]] = []
+    style_pack_keywords = ["Style Pack", "Timeless Wisdom Style Pack", "WSD"]
     for s in snippets:
         name = s.get("name", "")
         tags = s.get("tags", [])
-        # Match by name prefix or by the 'auto-deployed' tag
-        if name.startswith(name_prefix) or "auto-deployed" in tags:
-            return s["id"]
-    return None
+        scope = s.get("scope", "")
+        # Match by name prefix, auto-deployed tag, or style pack keywords
+        is_match = (
+            name.startswith(name_prefix)
+            or "auto-deployed" in tags
+            or any(kw in name for kw in style_pack_keywords)
+        )
+        if is_match and scope in ("front-end", "site-css"):
+            matches.append(s)
+
+    if not matches:
+        return None
+
+    # Keep the newest match (highest ID), deactivate all others
+    matches.sort(key=lambda s: s.get("id", 0))
+    primary = matches[-1]
+
+    for s in matches[:-1]:
+        sid = s.get("id")
+        if s.get("active", False):
+            print(f"[deploy] Deactivating old snippet #{sid} ({s.get('name', '')})")
+            wp_request_safe(
+                f"{api_base}/wp-json/code-snippets/v1/snippets/{sid}/deactivate",
+                auth=auth,
+                method="PUT",
+            )
+
+    return primary["id"]
 
 
 def deploy_snippet(

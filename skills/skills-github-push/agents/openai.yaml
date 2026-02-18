@@ -1,4 +1,0 @@
-interface:
-  display_name: "Skills GitHub Push"
-  short_description: "Sync installed skills to GitHub"
-  default_prompt: "Use -github-push to push all my installed skills to GitHub."

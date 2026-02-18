@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "levy",
+  "brand_name": "Levy",
+  "captured_at": "2026-02-18T16:17:12.591497+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://levy.co.uk"
+    },
+    {
+      "type": "asset",
+      "value": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/levy-logo.svg"
+    }
+  ],
+  "logos": [
+    {
+      "path": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/levy-logo.svg",
+      "source": "skill-asset:primary-logo"
+    },
+    {
+      "url": "https://levy.co.uk/media/n5wbbhdq/jockey-club.png?width=160&amp;height=160&amp;quality=10&amp;v=1dc134ed2c142d0",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://levy.co.uk/media/kdtl54aj/pg.png?width=160&amp;height=160&amp;quality=10&amp;v=1dc134f67092930",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://levy.co.uk/media/yhwac24h/kerb.png?width=160&amp;height=160&amp;quality=10&amp;v=1dc134e2ebda6b0",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://levy.co.uk/media/1chfz3q0/tvc.png?width=160&amp;height=160&amp;quality=10&amp;v=1dc134fd9099420",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://levy.co.uk/media/1uhf5blt/lvp.png?width=160&amp;height=160&amp;quality=10&amp;v=1dc1352af3b7e30",
+      "source": "img:logo-hint"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#1A1A1A",
+      "count": 1
+    }
+  ],
+  "fonts": [],
+  "guidelines": [
+    {
+      "title": "Creative We\u2019ll reimagine your guest experience through brand, design and thoughtful technology. And we\u2019ll take care of the practical bit to make it a reality too. Find out more",
+      "url": "https://levy.co.uk/creative/"
+    }
+  ],
+  "policies": [
+    {
+      "title": "Cookie Policy",
+      "url": "https://www.compass-group.co.uk/cookie-policy/"
+    }
+  ],
+  "style_notes": [
+    "Preset generated from /tmp/levy.profile.json"
+  ]
+}

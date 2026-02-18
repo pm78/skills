@@ -1,7 +1,0 @@
-interface:
-  display_name: "HubSpot Prospection"
-  short_description: "Run prospecting campaigns via HubSpot CRM"
-  default_prompt: "Use -hubspot-prospection to run prospecting campaigns."
-dependencies:
-  mcp:
-    - hubspot

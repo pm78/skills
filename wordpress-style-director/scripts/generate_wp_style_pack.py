@@ -455,28 +455,53 @@ def build_tokens_css(site_name: str, roles: Dict[str, str], heading_font: str, b
 
 def build_wordpress_overrides_css() -> str:
     return """/* WordPress presentation overrides */
-body,
-.site,
-.site-content,
-#page {
+
+/* --- Global base --- */
+body {
   background: var(--wsd-bg) !important;
   color: var(--wsd-text) !important;
-  font-family: var(--wsd-font-body);
+  font-family: var(--wsd-font-body) !important;
+  font-size: 18px;
+  line-height: var(--wsd-line);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
+.site-content,
+#content,
+#primary {
+  background-color: var(--wsd-bg);
+  color: var(--wsd-text);
+}
+
+/* --- Headings (exclude .site-title — handled separately) --- */
+h1, h2, h3, h4, h5, h6,
 .entry-title,
-.site-title {
-  font-family: var(--wsd-font-heading);
+.page-title,
+.wp-block-heading {
+  font-family: var(--wsd-font-heading) !important;
   color: var(--wsd-text);
   letter-spacing: -0.01em;
 }
 
+/* --- Header — preserve theme header image --- */
+.site-header,
+header#masthead {
+  /* Do NOT override background — themes often use header images */
+}
+
+.site-title,
+.site-title a {
+  font-family: var(--wsd-font-heading) !important;
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  text-decoration: none !important;
+}
+
+.site-description {
+  color: rgba(255, 255, 255, 0.85) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* --- Body content with readable sizes --- */
 .entry-content,
 .entry-content p,
 .entry-content li,
@@ -484,27 +509,53 @@ h6,
 .widget p,
 .widget li {
   text-align: left !important;
-  text-justify: auto !important;
   line-height: var(--wsd-line);
-  color: var(--wsd-text);
+  color: var(--wsd-text) !important;
+  font-size: 1.2rem !important;
 }
 
 .entry-content {
   max-width: var(--wsd-content-max);
 }
 
+.entry-content p {
+  font-size: 1.2rem !important;
+}
+
+/* Article excerpt / summary on homepage */
+.entry-summary,
+.entry-summary p,
+.post-card p,
+article .entry-summary {
+  font-size: 1.15rem !important;
+  line-height: var(--wsd-line);
+  color: var(--wsd-text) !important;
+}
+
 .entry-content a,
-.widget a,
-a {
-  color: var(--wsd-link);
+.widget a {
+  color: var(--wsd-link) !important;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 2px;
 }
 
 .entry-content a:hover,
-.widget a:hover,
-a:hover {
-  color: var(--wsd-link-hover);
+.widget a:hover {
+  color: var(--wsd-link-hover) !important;
+}
+
+/* --- Navigation --- */
+.main-navigation a,
+.primary-menu a,
+.site-header .menu a {
+  color: var(--wsd-text) !important;
+  text-decoration: none !important;
+}
+
+.main-navigation a:hover,
+.primary-menu a:hover,
+.site-header .menu a:hover {
+  color: var(--wsd-link) !important;
 }
 
 blockquote {
@@ -535,7 +586,6 @@ img,
 .entry-content .sources-list,
 .entry-content .sources-list li {
   text-align: left !important;
-  text-justify: auto !important;
   word-spacing: normal !important;
   letter-spacing: normal !important;
 }
@@ -549,21 +599,54 @@ img,
   font-weight: 600;
 }
 
-.widget,
+/* --- Sidebar — high-specificity to override theme dark styles --- */
+#secondary,
+aside.sidebar,
+.sidebar {
+  background: var(--wsd-bg) !important;
+}
+
+#secondary .widget,
+aside.sidebar .widget,
 .sidebar .widget,
-#secondary .widget {
-  background: color-mix(in srgb, var(--wsd-surface) 70%, transparent);
-  border: 1px solid color-mix(in srgb, var(--wsd-border) 35%, transparent);
+body .widget {
+  background: var(--wsd-surface) !important;
+  border: 1px solid var(--wsd-border) !important;
   border-radius: var(--wsd-radius);
-  padding: 1rem;
+  padding: 1rem !important;
+  color: var(--wsd-text) !important;
+}
+
+#secondary .widget *,
+aside.sidebar .widget *,
+.sidebar .widget * {
+  color: var(--wsd-text);
+}
+
+#secondary .widget a,
+aside.sidebar .widget a,
+.sidebar .widget a {
+  color: var(--wsd-link) !important;
+}
+
+#secondary .widget a:hover,
+aside.sidebar .widget a:hover,
+.sidebar .widget a:hover {
+  color: var(--wsd-link-hover) !important;
+}
+
+.widget-title {
+  font-family: var(--wsd-font-heading) !important;
+  color: var(--wsd-text) !important;
+  background: transparent !important;
 }
 
 button,
 input[type='submit'],
 .wp-block-button__link {
-  background: var(--wsd-primary);
-  color: var(--wsd-bg);
-  border: none;
+  background: var(--wsd-primary) !important;
+  color: #FFFFFF !important;
+  border: none !important;
   border-radius: 999px;
   padding: 0.55rem 1rem;
 }
@@ -571,7 +654,194 @@ input[type='submit'],
 button:hover,
 input[type='submit']:hover,
 .wp-block-button__link:hover {
-  background: var(--wsd-accent);
+  background: var(--wsd-accent) !important;
+}
+
+/* Read More / Continue Reading (Nisarg + Bootstrap variants) */
+p.read-more a.btn.btn-default,
+p.read-more a.btn.btn-default:link,
+p.read-more a.btn.btn-default:visited,
+p.read-more a.btn.btn-default:active,
+p.read-more a.btn.btn-default:focus,
+.entry-summary a.btn.btn-default,
+.entry-summary a.btn.btn-default:link,
+.entry-summary a.btn.btn-default:visited,
+a.more-link,
+a.more-link:link,
+a.more-link:visited,
+.more-link,
+.more-link:link,
+.more-link:visited {
+  background: var(--wsd-primary) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--wsd-primary) !important;
+  text-decoration: none !important;
+  text-shadow: none !important;
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1.15 !important;
+  text-indent: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 2.2rem !important;
+  padding: 0.55rem 1.1rem !important;
+}
+
+p.read-more a.btn.btn-default *,
+.entry-summary a.btn.btn-default *,
+a.more-link *,
+.more-link * {
+  color: #FFFFFF !important;
+}
+
+p.read-more a.btn.btn-default:hover,
+p.read-more a.btn.btn-default:focus,
+.entry-summary a.btn.btn-default:hover,
+.entry-summary a.btn.btn-default:focus,
+a.more-link:hover,
+a.more-link:focus,
+.more-link:hover,
+.more-link:focus {
+  background: var(--wsd-accent) !important;
+  border-color: var(--wsd-accent) !important;
+  color: #FFFFFF !important;
+}
+
+p.read-more a.btn.btn-default::before,
+p.read-more a.btn.btn-default::after,
+.entry-summary a.btn.btn-default::before,
+.entry-summary a.btn.btn-default::after,
+a.more-link::before,
+a.more-link::after,
+.more-link::before,
+.more-link::after {
+  content: none !important;
+}
+"""
+
+
+def build_dark_mode_neutralization_css() -> str:
+    """Override common WordPress theme dark mode rules.
+
+    Many themes (e.g. Nisarg) add a ``body.dark`` class that sets dark
+    backgrounds (#121212/#212121) and light text (rgba(255,255,255,0.87)).
+    This section neutralizes those rules to enforce our palette.
+    """
+    return """
+/* =========================================================
+   DARK MODE NEUTRALIZATION
+   Override body.dark rules from themes like Nisarg, flavor, etc.
+   ========================================================= */
+body.dark {
+  background-color: var(--wsd-bg) !important;
+  color: var(--wsd-text) !important;
+}
+
+.dark .main-navigation {
+  background-color: var(--wsd-bg) !important;
+}
+
+.dark .post-content,
+.dark .single-post-content,
+.dark .post-comments,
+.dark .comments-area,
+.dark .posts-navigation .nav-links,
+.dark .post-navigation .nav-links,
+.dark .nav-previous,
+.dark .nav-next,
+.dark .next-post,
+.dark .prev-post,
+.dark .pagination .page-numbers,
+.dark .author-bio,
+.dark blockquote,
+.dark input,
+.dark select,
+.dark textarea,
+.dark thead {
+  background: var(--wsd-surface) !important;
+}
+
+.dark #secondary .widget {
+  background: var(--wsd-surface) !important;
+  color: var(--wsd-text) !important;
+}
+
+.dark .main-navigation .primary-menu > li > .sub-menu,
+.dark .sub-menu {
+  background-color: var(--wsd-surface) !important;
+  border-color: var(--wsd-border) !important;
+}
+
+/* Dark mode text colors — force to our palette */
+body.dark,
+.dark .entry-summary,
+.dark .entry-content,
+.dark #secondary .widget,
+.dark #secondary .widget a,
+.dark .main-navigation .primary-menu > li > a,
+.dark .main-navigation .primary-menu > li > .sub-menu > li > a,
+.dark .main-navigation ul ul a,
+.dark .next-post a,
+.dark .prev-post a,
+.dark input[type=text],
+.dark input[type=email],
+.dark select {
+  color: var(--wsd-text) !important;
+}
+
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark .entry-header .entry-title a,
+.dark #secondary .widget .widget-title,
+.dark blockquote,
+.dark .pagination .page-numbers {
+  color: var(--wsd-text) !important;
+}
+
+.dark .entry-meta,
+.dark .entry-meta a,
+.dark .cat-links a,
+.dark .tags-links a {
+  color: var(--wsd-muted) !important;
+}
+
+.dark .entry-content a,
+.dark .entry-summary a,
+.dark #secondary .widget a {
+  color: var(--wsd-link) !important;
+}
+
+.dark .entry-content a:hover,
+.dark .entry-summary a:hover,
+.dark #secondary .widget a:hover {
+  color: var(--wsd-link-hover) !important;
+}
+
+.dark input,
+.dark textarea,
+.dark #secondary .widget li {
+  border-color: var(--wsd-border) !important;
+}
+
+/* Keep header text white in dark mode (over dark header image) */
+.dark .site-title,
+.dark .site-title a,
+.dark .site-description {
+  color: #FFFFFF !important;
+}
+
+.dark #secondary .widget .widget-title {
+  background: transparent !important;
+}
+
+.dark .main-navigation .menu-toggle .icon-bar {
+  background-color: var(--wsd-text) !important;
 }
 """
 
@@ -648,7 +918,8 @@ def main() -> None:
 
     tokens_css = build_tokens_css(args.site_name, roles, heading_font, body_font)
     overrides_css = build_wordpress_overrides_css()
-    combined_css = tokens_css + "\n" + overrides_css
+    dark_mode_css = build_dark_mode_neutralization_css()
+    combined_css = tokens_css + "\n" + dark_mode_css + "\n" + overrides_css
 
     summary = {
         "mode": args.mode,

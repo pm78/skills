@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "compass-group",
+  "brand_name": "Compass Group",
+  "captured_at": "2026-02-18T16:17:10.542086+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://www.compass-group.co.uk"
+    },
+    {
+      "type": "asset",
+      "value": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/compass-group-logo.svg"
+    }
+  ],
+  "logos": [
+    {
+      "path": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/compass-group-logo.svg",
+      "source": "skill-asset:primary-logo"
+    },
+    {
+      "url": "https://www.compass-group.co.uk/assets/img/compass-pride-logo.png",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://www.compass-group.co.uk/assets/img/svg/twitter.svg",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://www.compass-group.co.uk/assets/img/svg/linkedin.svg",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://www.compass-group.co.uk/assets/img/svg/instagram.svg",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://www.compass-group.co.uk/media/vxcbz3ea/twitter.svg",
+      "source": "img:logo-hint"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#5BB4B1",
+      "count": 6
+    },
+    {
+      "hex": "#F6B831",
+      "count": 5
+    },
+    {
+      "hex": "#31679F",
+      "count": 2
+    },
+    {
+      "hex": "#AF3627",
+      "count": 2
+    },
+    {
+      "hex": "#2A495B",
+      "count": 2
+    },
+    {
+      "hex": "#DE5C45",
+      "count": 1
+    },
+    {
+      "hex": "#0A1521",
+      "count": 1
+    },
+    {
+      "hex": "#293443",
+      "count": 1
+    }
+  ],
+  "fonts": [],
+  "guidelines": [
+    {
+      "title": "Our Brands",
+      "url": "https://www.compass-group.co.uk/about-us/our-brands/"
+    }
+  ],
+  "policies": [
+    {
+      "title": "Antibiotic Policy",
+      "url": "https://www.compass-group.co.uk/media/p0xde5xs/antibiotic-policy-final-oct-23.pdf"
+    },
+    {
+      "title": "Terms & Conditions",
+      "url": "https://www.compass-group.co.uk/terms-and-conditions/"
+    },
+    {
+      "title": "Cookie Notice",
+      "url": "https://www.compass-group.co.uk/cookie-policy/"
+    },
+    {
+      "title": "UK&I Business Integrity Policy",
+      "url": "https://www.compass-group.co.uk/media/tvqh2cyt/uki-business-integrity-policy_240514.pdf"
+    }
+  ],
+  "style_notes": [
+    "Preset generated from /tmp/compass-group.profile.json"
+  ]
+}

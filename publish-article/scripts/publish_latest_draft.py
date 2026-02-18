@@ -14,15 +14,18 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 NOTION_API_BASE = "https://api.notion.com/v1"
 OPENAI_API_BASE = "https://api.openai.com/v1"
 DEFAULT_WORDPRESS_SITE = "https://thrivethroughtime.com"
 DEFAULT_MY_ARTICLES_DB_ID = "1dc11393-09f8-8049-82eb-e18d8d012f96"
+DEFAULT_SITE_KEY = "thrivethroughtime"
 DEFAULT_IMAGE_MODEL = "gpt-image-1"
 DEFAULT_IMAGE_SIZE = "1536x1024"
 DEFAULT_IMAGE_QUALITY = "high"
+DEFAULT_SITES_CONFIG = str((Path(__file__).resolve().parents[1] / "config" / "wp_sites.json"))
 
 
 def parse_args() -> argparse.Namespace:
@@ -35,19 +38,36 @@ def parse_args() -> argparse.Namespace:
         default=os.getenv("MY_ARTICLES_DB_ID", DEFAULT_MY_ARTICLES_DB_ID),
     )
     parser.add_argument(
+        "--publications-db-id",
+        default=os.getenv("PUBLICATIONS_DB_ID", ""),
+        help="Optional Notion Publications DB ID for per-site publication logs",
+    )
+    parser.add_argument(
+        "--site",
+        default=os.getenv("WP_SITE_KEY", ""),
+        help="Target site key from config/wp_sites.json (for example: thrivethroughtime, lesnewsducoach)",
+    )
+    parser.add_argument(
+        "--sites-config",
+        default=os.getenv("WP_SITES_CONFIG", DEFAULT_SITES_CONFIG),
+        help="Path to site registry JSON",
+    )
+    parser.add_argument(
+        "--default-site-key",
+        default=os.getenv("DEFAULT_SITE_KEY", DEFAULT_SITE_KEY),
+        help="Fallback site key when no --site and no Notion target site",
+    )
+    parser.add_argument(
         "--wordpress-site",
-        default=os.getenv("WORDPRESS_SITE", DEFAULT_WORDPRESS_SITE),
+        default="",
     )
     parser.add_argument(
         "--wp-username",
-        default=os.getenv(
-            "WP_USERNAME",
-            os.getenv("WORDPRESS_USERNAME", os.getenv("WP_APP_USERNAME", "")),
-        ),
+        default="",
     )
     parser.add_argument(
         "--wp-app-password",
-        default=os.getenv("WP_APP_PASSWORD", os.getenv("WORDPRESS_APP_PASSWORD", "")),
+        default="",
     )
     parser.add_argument("--openai-api-key", default=os.getenv("OPENAI_API_KEY", ""))
     parser.add_argument(
@@ -66,7 +86,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--draft-status", default="draft")
     parser.add_argument("--published-status", default="published")
     parser.add_argument("--partially-published-status", default="partially_published")
-    parser.add_argument("--platform-name", default="WordPress")
+    parser.add_argument("--platform-name", default="")
     parser.add_argument("--page-size", type=int, default=25)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--print-json", action="store_true")
@@ -78,6 +98,121 @@ def require(value: str, label: str) -> str:
     if not value:
         raise SystemExit(f"Missing required value: {label}")
     return value
+
+
+def normalize_site_key(value: str) -> str:
+    value = (value or "").strip().lower()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    value = re.sub(r"-{2,}", "-", value).strip("-")
+    return value
+
+
+def load_sites_config(path: str) -> Dict[str, Dict[str, Any]]:
+    path = (path or "").strip()
+    if not path:
+        return {}
+    config_path = Path(path)
+    if not config_path.exists():
+        return {}
+    raw = config_path.read_text(encoding="utf-8")
+    data = json.loads(raw)
+    if not isinstance(data, dict):
+        raise SystemExit(f"Invalid sites config format: {config_path}")
+    out: Dict[str, Dict[str, Any]] = {}
+    for key, value in data.items():
+        if not isinstance(value, dict):
+            continue
+        out[normalize_site_key(str(key))] = value
+    return out
+
+
+def resolve_site_config(
+    requested: str,
+    sites: Dict[str, Dict[str, Any]],
+) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+    requested = (requested or "").strip()
+    if not requested:
+        return None, None
+
+    normalized = normalize_site_key(requested)
+    if normalized in sites:
+        return normalized, sites[normalized]
+
+    for key, cfg in sites.items():
+        candidates: List[str] = [key]
+        label = (cfg.get("notion_site_label") or cfg.get("platform_name") or "").strip()
+        if label:
+            candidates.append(label)
+        for alias in cfg.get("aliases") or []:
+            if isinstance(alias, str):
+                candidates.append(alias)
+        if normalized in {normalize_site_key(candidate) for candidate in candidates if candidate}:
+            return key, cfg
+
+    return None, None
+
+
+def resolve_wordpress_credentials(
+    *,
+    site_cfg: Optional[Dict[str, Any]],
+    wordpress_site_cli: str,
+    wp_username_cli: str,
+    wp_password_cli: str,
+) -> Tuple[str, str, str]:
+    wordpress_site = (wordpress_site_cli or "").strip()
+    wp_username = (wp_username_cli or "").strip()
+    wp_app_password = (wp_password_cli or "").strip()
+
+    if site_cfg:
+        if not wordpress_site:
+            wordpress_site = (site_cfg.get("wp_url") or "").strip()
+
+        user_env = (site_cfg.get("username_env") or "").strip()
+        pass_env = (site_cfg.get("password_env") or "").strip()
+
+        if user_env and not wp_username:
+            wp_username = os.getenv(user_env, "").strip()
+        if pass_env and not wp_app_password:
+            wp_app_password = os.getenv(pass_env, "").strip()
+
+    if not wordpress_site:
+        wordpress_site = (
+            os.getenv("WORDPRESS_SITE", "")
+            or os.getenv("WP_URL", "")
+            or DEFAULT_WORDPRESS_SITE
+        ).strip()
+
+    if not wp_username:
+        wp_username = (
+            os.getenv("WP_USERNAME", "")
+            or os.getenv("WORDPRESS_USERNAME", "")
+            or os.getenv("WP_APP_USERNAME", "")
+        ).strip()
+    if not wp_app_password:
+        wp_app_password = (
+            os.getenv("WP_APP_PASSWORD", "")
+            or os.getenv("WORDPRESS_APP_PASSWORD", "")
+        ).strip()
+
+    return wordpress_site, wp_username, wp_app_password
+
+
+def choose_platform_name(
+    explicit_platform_name: str,
+    site_cfg: Optional[Dict[str, Any]],
+    site_key: Optional[str],
+) -> str:
+    explicit_platform_name = (explicit_platform_name or "").strip()
+    if explicit_platform_name:
+        return explicit_platform_name
+    if site_cfg:
+        for field in ("platform_name", "notion_site_label", "display_name"):
+            value = (site_cfg.get(field) or "").strip()
+            if value:
+                return value
+    if site_key:
+        return site_key
+    return "WordPress"
 
 
 def http_json(
@@ -182,6 +317,9 @@ def query_latest_draft_page(
     status_property_name: str,
     draft_status: str,
     page_size: int,
+    selected_site_key: Optional[str] = None,
+    target_site_property_name: Optional[str] = None,
+    sites: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     cursor: Optional[str] = None
     size = max(1, min(page_size, 100))
@@ -206,14 +344,22 @@ def query_latest_draft_page(
             status_prop = properties.get(status_property_name, {})
             status_name = status_name_from_property(status_prop)
             if status_name.lower() == draft_status.lower():
+                if not row_matches_site_target(
+                    row,
+                    target_site_property_name,
+                    selected_site_key,
+                    sites or {},
+                ):
+                    continue
                 return row
 
         if not data.get("has_more"):
             break
         cursor = data.get("next_cursor")
 
+    site_hint = f" and site '{selected_site_key}'" if selected_site_key else ""
     raise SystemExit(
-        f"No article found with status '{draft_status}' in My Articles database"
+        f"No article found with status '{draft_status}'{site_hint} in My Articles database"
     )
 
 
@@ -249,6 +395,59 @@ def extract_property_tags(row: Dict[str, Any], property_name: str) -> List[str]:
         return [part.strip() for part in re.split(r"[,;|]", raw) if part.strip()]
 
     return []
+
+
+def row_matches_site_target(
+    row: Dict[str, Any],
+    target_site_property_name: Optional[str],
+    selected_site_key: Optional[str],
+    sites: Dict[str, Dict[str, Any]],
+) -> bool:
+    if not selected_site_key or not target_site_property_name:
+        return True
+
+    values = extract_property_tags(row, target_site_property_name)
+    if not values:
+        return True
+
+    wildcard = {"all", "any", "both", "multi", "all-sites"}
+    for value in values:
+        normalized = normalize_site_key(value)
+        if normalized in wildcard:
+            return True
+        resolved_key, _ = resolve_site_config(value, sites)
+        if resolved_key == selected_site_key:
+            return True
+        if normalized == selected_site_key:
+            return True
+
+    return False
+
+
+def resolve_site_from_row(
+    row: Dict[str, Any],
+    target_site_property_name: Optional[str],
+    sites: Dict[str, Dict[str, Any]],
+) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
+    if not target_site_property_name:
+        return None, None, None
+
+    values = extract_property_tags(row, target_site_property_name)
+    if not values:
+        return None, None, None
+
+    wildcard = {"all", "any", "both", "multi", "all-sites"}
+    for value in values:
+        normalized = normalize_site_key(value)
+        if not normalized or normalized in wildcard:
+            continue
+        site_key, site_cfg = resolve_site_config(value, sites)
+        if site_key:
+            return site_key, site_cfg, value
+        if normalized in sites:
+            return normalized, sites.get(normalized), value
+
+    return None, None, None
 
 
 def fetch_block_children(notion_token: str, block_id: str) -> List[Dict[str, Any]]:
@@ -896,17 +1095,177 @@ def update_notion_page_after_publish(
     )
 
 
+def notion_rich_text(text: str) -> List[Dict[str, Any]]:
+    text = (text or "").strip()
+    if not text:
+        return []
+    chunks = [text[i : i + 1800] for i in range(0, len(text), 1800)]
+    return [{"type": "text", "text": {"content": chunk}} for chunk in chunks[:10]]
+
+
+def resolve_option_name(preferred: str, options: List[str]) -> str:
+    preferred = (preferred or "").strip()
+    if not preferred:
+        return options[0] if options else preferred
+    if not options:
+        return preferred
+    by_lower = {name.lower(): name for name in options}
+    return by_lower.get(preferred.lower(), options[0])
+
+
+def publication_site_payload(prop_type: str, prop_meta: Dict[str, Any], site_label: str) -> Dict[str, Any]:
+    if prop_type == "multi_select":
+        return {"multi_select": [{"name": site_label}]}
+    if prop_type == "select":
+        options = extract_status_options(prop_meta, "select")
+        return {"select": {"name": resolve_option_name(site_label, options)}}
+    if prop_type == "rich_text":
+        return {"rich_text": notion_rich_text(site_label)}
+    raise SystemExit(f"Unsupported publication site property type: {prop_type}")
+
+
+def publication_post_id_payload(prop_type: str, wp_post_id: Optional[int]) -> Dict[str, Any]:
+    if wp_post_id is None:
+        if prop_type == "number":
+            return {"number": None}
+        if prop_type == "rich_text":
+            return {"rich_text": []}
+        return {}
+    if prop_type == "number":
+        return {"number": wp_post_id}
+    if prop_type == "rich_text":
+        return {"rich_text": notion_rich_text(str(wp_post_id))}
+    return {}
+
+
+def create_publication_log_entry(
+    notion_token: str,
+    publications_db_id: str,
+    *,
+    article_page_id: str,
+    article_title: str,
+    site_label: str,
+    wp_post_id: Optional[int],
+    wp_link: str,
+    illustration_url: str,
+    dry_run: bool,
+) -> Dict[str, Any]:
+    publications_db_id = (publications_db_id or "").strip()
+    if not publications_db_id:
+        return {"skipped": True, "reason": "No publications DB ID configured"}
+
+    schema = load_db_schema(notion_token, publications_db_id)
+    props = schema.get("properties", {})
+
+    title_prop = pick_property(props, ["Title", "Name"], ("title",))
+    article_relation_prop = pick_property(
+        props,
+        ["Article", "My Article", "Content", "Post", "Article Page"],
+        ("relation",),
+        allow_fallback=False,
+    )
+    site_prop = pick_property(
+        props,
+        ["Site", "Website", "Platform", "Channel", "Published On Site", "Publish Site"],
+        ("select", "multi_select", "rich_text"),
+        allow_fallback=False,
+    )
+    status_prop = pick_property(props, ["Status"], ("status", "select"), allow_fallback=False)
+    post_id_prop = pick_property(
+        props,
+        ["WP Post ID", "WordPress Post ID", "Post ID"],
+        ("number", "rich_text"),
+        allow_fallback=False,
+    )
+    published_url_prop = pick_property(
+        props,
+        ["Published URL", "Post URL", "URL", "WordPress URL"],
+        ("url",),
+        allow_fallback=False,
+    )
+    published_at_prop = pick_property(
+        props,
+        ["Published At", "Publish Date", "Published Date"],
+        ("date",),
+        allow_fallback=False,
+    )
+    illustration_url_prop = pick_property(
+        props,
+        ["Illustration URL", "Featured Image URL", "Image URL"],
+        ("url",),
+        allow_fallback=False,
+    )
+
+    properties: Dict[str, Any] = {}
+
+    if title_prop:
+        properties[title_prop[0]] = {
+            "title": notion_rich_text(f"{article_title} · {site_label}") or notion_rich_text(article_title)
+        }
+    if article_relation_prop:
+        properties[article_relation_prop[0]] = {"relation": [{"id": article_page_id}]}
+    if site_prop:
+        properties[site_prop[0]] = publication_site_payload(site_prop[1], props.get(site_prop[0], {}), site_label)
+    if status_prop:
+        options = extract_status_options(props.get(status_prop[0], {}), status_prop[1])
+        if status_prop[1] == "status":
+            properties[status_prop[0]] = {"status": {"name": resolve_option_name("Published", options)}}
+        else:
+            properties[status_prop[0]] = {"select": {"name": resolve_option_name("Published", options)}}
+    if post_id_prop:
+        payload = publication_post_id_payload(post_id_prop[1], wp_post_id)
+        if payload:
+            properties[post_id_prop[0]] = payload
+    if published_url_prop and wp_link:
+        properties[published_url_prop[0]] = {"url": wp_link}
+    if published_at_prop:
+        properties[published_at_prop[0]] = {
+            "date": {"start": dt.datetime.now(dt.timezone.utc).date().isoformat()}
+        }
+    if illustration_url_prop and illustration_url:
+        properties[illustration_url_prop[0]] = {"url": illustration_url}
+
+    payload = {"parent": {"database_id": publications_db_id}, "properties": properties}
+    if dry_run:
+        return {"dry_run": True, "payload": payload}
+
+    result = http_json(
+        "POST",
+        f"{NOTION_API_BASE}/pages",
+        headers=notion_headers(notion_token),
+        payload=payload,
+    )
+    return {"id": result.get("id"), "url": result.get("url")}
+
+
 def main() -> None:
     args = parse_args()
 
     notion_token = require(args.notion_token, "--notion-token or NOTION_TOKEN")
     articles_db_id = require(args.articles_db_id, "--articles-db-id or MY_ARTICLES_DB_ID")
-    wordpress_site = require(args.wordpress_site, "--wordpress-site or WORDPRESS_SITE")
-    wp_username = require(args.wp_username, "--wp-username or WP_USERNAME")
-    wp_app_password = require(
-        args.wp_app_password,
-        "--wp-app-password or WP_APP_PASSWORD",
-    )
+    sites = load_sites_config(args.sites_config)
+
+    requested_site_key, requested_site_cfg = resolve_site_config(args.site, sites)
+    if (args.site or "").strip():
+        if sites and not requested_site_key:
+            known = ", ".join(sorted(sites.keys()))
+            raise SystemExit(
+                f"Unknown site '{args.site}'. Available site keys: {known}"
+            )
+        if not requested_site_key:
+            requested_site_key = normalize_site_key(args.site)
+            requested_site_cfg = None
+
+    default_site_key, default_site_cfg = resolve_site_config(args.default_site_key, sites)
+    if (args.default_site_key or "").strip():
+        if sites and not default_site_key:
+            known = ", ".join(sorted(sites.keys()))
+            raise SystemExit(
+                f"Unknown default site '{args.default_site_key}'. Available site keys: {known}"
+            )
+        if not default_site_key:
+            default_site_key = normalize_site_key(args.default_site_key)
+            default_site_cfg = None
 
     schema = load_db_schema(notion_token, articles_db_id)
     props = schema.get("properties", {})
@@ -975,6 +1334,21 @@ def main() -> None:
         ("multi_select", "select", "rich_text"),
         allow_fallback=False,
     )
+    target_site_prop = pick_property(
+        props,
+        [
+            "Target Site",
+            "Publish Site",
+            "Site",
+            "Website",
+            "WordPress Site",
+            "Target Website",
+            "Publication Site",
+            "Publish To Site",
+        ],
+        ("multi_select", "select", "rich_text"),
+        allow_fallback=False,
+    )
     publish_date_prop = pick_property(
         props,
         ["Publish Date", "Published Date"],
@@ -988,12 +1362,67 @@ def main() -> None:
         raise SystemExit("My Articles DB has no Status property of type status/select")
 
     status_name, status_type = status_prop
+    site_key_for_draft_filter = requested_site_key or default_site_key
     page = query_latest_draft_page(
         notion_token,
         articles_db_id,
         status_property_name=status_name,
         draft_status=args.draft_status,
         page_size=args.page_size,
+        selected_site_key=site_key_for_draft_filter,
+        target_site_property_name=target_site_prop[0] if target_site_prop else None,
+        sites=sites,
+    )
+
+    selected_site_key = requested_site_key
+    selected_site_cfg = requested_site_cfg
+
+    if not selected_site_key:
+        row_site_key, row_site_cfg, _ = resolve_site_from_row(
+            page,
+            target_site_prop[0] if target_site_prop else None,
+            sites,
+        )
+        if row_site_key:
+            selected_site_key = row_site_key
+            selected_site_cfg = row_site_cfg
+
+    if not selected_site_key:
+        selected_site_key = default_site_key
+        selected_site_cfg = default_site_cfg
+
+    if not selected_site_key and sites:
+        if len(sites) == 1:
+            selected_site_key = next(iter(sites))
+            selected_site_cfg = sites[selected_site_key]
+        else:
+            known = ", ".join(sorted(sites.keys()))
+            raise SystemExit(
+                "Multiple WordPress sites are configured but no target site was resolved. "
+                "Set --site or fill a Notion 'Target Site' style property. "
+                f"Available site keys: {known}"
+            )
+
+    wordpress_site, wp_username, wp_app_password = resolve_wordpress_credentials(
+        site_cfg=selected_site_cfg,
+        wordpress_site_cli=args.wordpress_site,
+        wp_username_cli=args.wp_username,
+        wp_password_cli=args.wp_app_password,
+    )
+    wordpress_site = require(wordpress_site, "--wordpress-site or WORDPRESS_SITE")
+    wp_username = require(wp_username, "--wp-username or WP_USERNAME")
+    wp_app_password = require(
+        wp_app_password,
+        "--wp-app-password or WP_APP_PASSWORD",
+    )
+    platform_name = choose_platform_name(
+        args.platform_name,
+        selected_site_cfg,
+        selected_site_key,
+    )
+    site_label = (
+        ((selected_site_cfg or {}).get("notion_site_label") or "").strip()
+        or platform_name
     )
 
     page_id = page.get("id", "")
@@ -1021,7 +1450,7 @@ def main() -> None:
         else []
     )
     published_platforms_after = sorted(
-        {name for name in [*current_published_platforms, args.platform_name] if (name or "").strip()}
+        {name for name in [*current_published_platforms, platform_name] if (name or "").strip()}
     )
     status_options = extract_status_options(props.get(status_name, {}), status_type)
     resolved_status_after_publish = decide_status_after_publish(
@@ -1122,10 +1551,21 @@ def main() -> None:
             published_platforms_prop[1] if published_platforms_prop else None
         ),
         current_published_platforms=current_published_platforms,
-        platform_name=args.platform_name,
+        platform_name=platform_name,
         illustration_url_property_name=illustration_url_prop[0] if illustration_url_prop else None,
         publish_date_property_name=publish_date_prop[0] if publish_date_prop else None,
         wordpress_link=wp_link,
+        illustration_url=illustration_url,
+        dry_run=args.dry_run,
+    )
+    publication_log_response = create_publication_log_entry(
+        notion_token,
+        args.publications_db_id,
+        article_page_id=page_id,
+        article_title=title,
+        site_label=site_label,
+        wp_post_id=wp_response.get("id"),
+        wp_link=wp_link,
         illustration_url=illustration_url,
         dry_run=args.dry_run,
     )
@@ -1134,10 +1574,13 @@ def main() -> None:
         "dry_run": args.dry_run,
         "notion_page_id": page_id,
         "title": title,
+        "site_key": selected_site_key,
+        "site_label": site_label,
+        "wordpress_site": wordpress_site,
         "wordpress_post_id": wp_response.get("id"),
         "wordpress_link": wp_link,
         "notion_status_set_to": resolved_status_after_publish,
-        "platform_name": args.platform_name,
+        "platform_name": platform_name,
         "required_platforms": required_platforms,
         "published_platforms_before": current_published_platforms,
         "published_platforms_after": published_platforms_after,
@@ -1149,6 +1592,7 @@ def main() -> None:
             if illustration_media_id
             else ("inline_prepended" if prepend_illustration else "unchanged")
         ),
+        "publication_log": publication_log_response,
     }
 
     if args.print_json:
@@ -1157,6 +1601,9 @@ def main() -> None:
 
     print(f"Page ID: {page_id}")
     print(f"Title: {title}")
+    if selected_site_key:
+        print(f"Target site key: {selected_site_key}")
+    print(f"Target WordPress site: {wordpress_site}")
     print(f"WordPress post ID: {wp_response.get('id')}")
     print(f"WordPress link: {wp_link or '(none)'}")
     print(f"Illustration: {illustration_status}")
@@ -1167,11 +1614,13 @@ def main() -> None:
         print(f"Required platforms: {', '.join(sorted(required_platforms))}")
     if published_platforms_prop:
         print(f"Published platforms: {', '.join(published_platforms_after)}")
+    if publication_log_response.get("id"):
+        print(f"Publication log page ID: {publication_log_response.get('id')}")
     if args.dry_run:
         print("Dry run completed; no external changes were made.")
 
     # Keep these available for debugging without printing full payloads by default.
-    _ = update_response
+    _ = (update_response, publication_log_response)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,25 @@
+{
+  "thrivethroughtime": {
+    "wp_url": "https://thrivethroughtime.com",
+    "username_env": "WP_USERNAME",
+    "password_env": "WP_APP_PASSWORD",
+    "platform_name": "WordPress-ThriveThroughTime",
+    "notion_site_label": "thrivethroughtime",
+    "aliases": [
+      "thrive through time",
+      "timeless wisdom",
+      "thrivethroughtime.com"
+    ]
+  },
+  "lesnewsducoach": {
+    "wp_url": "https://lesnewsducoach.com",
+    "username_env": "WP_LNC_USERNAME",
+    "password_env": "WP_LNC_APP_PASSWORD",
+    "platform_name": "WordPress-LesNewsDuCoach",
+    "notion_site_label": "lesnewsducoach",
+    "aliases": [
+      "les news du coach",
+      "lesnewsducoach.com"
+    ]
+  }
+}
