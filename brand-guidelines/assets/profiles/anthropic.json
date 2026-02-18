@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "anthropic",
+  "brand_name": "Anthropic",
+  "captured_at": "2026-02-18T00:00:00Z",
+  "sources": [
+    {
+      "type": "preset",
+      "value": "Anthropic official brand palette"
+    }
+  ],
+  "logos": [],
+  "colors": [
+    {
+      "hex": "#141413",
+      "count": 100
+    },
+    {
+      "hex": "#FAF9F5",
+      "count": 95
+    },
+    {
+      "hex": "#B0AEA5",
+      "count": 70
+    },
+    {
+      "hex": "#E8E6DC",
+      "count": 60
+    },
+    {
+      "hex": "#D97757",
+      "count": 50
+    },
+    {
+      "hex": "#6A9BCC",
+      "count": 45
+    },
+    {
+      "hex": "#788C5D",
+      "count": 40
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Poppins",
+      "count": 100
+    },
+    {
+      "name": "Lora",
+      "count": 95
+    },
+    {
+      "name": "Arial",
+      "count": 50
+    },
+    {
+      "name": "Georgia",
+      "count": 45
+    }
+  ],
+  "guidelines": [],
+  "policies": [],
+  "style_notes": [
+    "Headings: Poppins (fallback Arial)",
+    "Body: Lora (fallback Georgia)",
+    "Use dark/light neutrals as base and orange/blue/green as accents"
+  ]
+}

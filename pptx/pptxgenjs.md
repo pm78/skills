@@ -193,6 +193,38 @@ slide.addImage({ path: "image.png", x: centerX, y: 1.2, w: calcWidth, h: maxHeig
 - **Standard**: PNG, JPG, GIF (animated GIFs work in Microsoft 365)
 - **SVG**: Works in modern PowerPoint/Microsoft 365
 
+### AI Illustration Map Workflow (Optional)
+
+Generate images first:
+
+```bash
+python scripts/generate_illustrations.py --spec assets/illustrations.spec.example.json --deck my-deck
+```
+
+Then consume `output/imagegen/my-deck/illustration-map.json`:
+
+```javascript
+const fs = require("fs");
+const map = JSON.parse(fs.readFileSync("output/imagegen/my-deck/illustration-map.json", "utf8"));
+
+for (const img of map.generated) {
+  const slide = slidesByNumber[img.slide]; // your own lookup table
+  if (!slide) continue;
+
+  const box = img.placement || { x: 5.2, y: 1.0, w: 4.2, h: 3.6 };
+  slide.addImage({
+    path: img.path,
+    x: box.x,
+    y: box.y,
+    w: box.w,
+    h: box.h,
+    sizing: { type: "cover", w: box.w, h: box.h }
+  });
+}
+```
+
+If `map.failed` has entries, keep placeholders and continue deck generation.
+
 ---
 
 ## Icons

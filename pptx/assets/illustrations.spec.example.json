@@ -1,0 +1,40 @@
+{
+  "deck": "demo-strategy",
+  "defaults": {
+    "model": "gpt-image-1.5",
+    "size": "1536x1024",
+    "quality": "medium",
+    "augment": false,
+    "constraints": "no text, no watermark"
+  },
+  "slides": [
+    {
+      "slide": 1,
+      "asset_name": "slide-01-hero",
+      "prompt": "Executive team workshop around a digital market map wall, editorial illustration style",
+      "use_case": "illustration-story",
+      "composition": "wide frame, clear subject, negative space on the right",
+      "negative": "stock-photo vibe, cluttered foreground, harsh neon",
+      "placement": {
+        "x": 5.2,
+        "y": 0.9,
+        "w": 4.2,
+        "h": 3.8
+      }
+    },
+    {
+      "slide": 3,
+      "asset_name": "slide-03-operations",
+      "prompt": "Operations dashboard command center with analysts reviewing trends, clean modern illustration",
+      "use_case": "illustration-story",
+      "composition": "mid-wide shot, left-weighted focal point",
+      "negative": "busy text overlays, watermark",
+      "placement": {
+        "x": 5.0,
+        "y": 1.2,
+        "w": 4.5,
+        "h": 3.3
+      }
+    }
+  ]
+}

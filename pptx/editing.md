@@ -26,20 +26,26 @@ When using an existing presentation as a template:
 
    Match content type to layout style (e.g., key points → bullet slide, team info → multi-column, testimonials → quote slide).
 
-3. **Unpack**: `python scripts/office/unpack.py template.pptx unpacked/`
+3. **Optional: Generate AI illustrations** (when using `illustrations=ai`):
+   ```bash
+   python scripts/generate_illustrations.py --spec assets/illustrations.spec.example.json --deck my-deck
+   ```
+   Use the resulting `illustration-map.json` as the source of truth for image paths and target slide mapping.
 
-4. **Build presentation** (do this yourself, not with subagents):
+4. **Unpack**: `python scripts/office/unpack.py template.pptx unpacked/`
+
+5. **Build presentation** (do this yourself, not with subagents):
    - Delete unwanted slides (remove from `<p:sldIdLst>`)
    - Duplicate slides you want to reuse (`add_slide.py`)
    - Reorder slides in `<p:sldIdLst>`
-   - **Complete all structural changes before step 5**
+   - **Complete all structural changes before step 6**
 
-5. **Edit content**: Update text in each `slide{N}.xml`.
+6. **Edit content**: Update text in each `slide{N}.xml`.
    **Use subagents here if available** — slides are separate XML files, so subagents can edit in parallel.
 
-6. **Clean**: `python scripts/clean.py unpacked/`
+7. **Clean**: `python scripts/clean.py unpacked/`
 
-7. **Pack**: `python scripts/office/pack.py unpacked/ output.pptx --original template.pptx`
+8. **Pack**: `python scripts/office/pack.py unpacked/ output.pptx --original template.pptx`
 
 ---
 
@@ -52,6 +58,7 @@ When using an existing presentation as a template:
 | `clean.py` | Remove orphaned files |
 | `pack.py` | Repack with validation |
 | `thumbnail.py` | Create visual grid of slides |
+| `generate_illustrations.py` | Create optional AI images + `illustration-map.json` via `imagegen` |
 
 ### unpack.py
 
@@ -96,6 +103,14 @@ Creates `thumbnails.jpg` with slide filenames as labels. Default 3 columns, max 
 
 **Use for template analysis only** (choosing layouts). For visual QA, use `soffice` + `pdftoppm` to create full-resolution individual slide images—see SKILL.md.
 
+### generate_illustrations.py
+
+```bash
+python scripts/generate_illustrations.py --spec assets/illustrations.spec.example.json --deck my-deck
+```
+
+Generates slide illustrations with the installed `imagegen` skill and writes a mapping JSON for downstream placement/replacement.
+
 ---
 
 ## Slide Operations
@@ -112,7 +127,7 @@ Slide order is in `ppt/presentation.xml` → `<p:sldIdLst>`.
 
 ## Editing Content
 
-**Subagents:** If available, use them here (after completing step 4). Each slide is a separate XML file, so subagents can edit in parallel. In your prompt to subagents, include:
+**Subagents:** If available, use them here (after completing step 5). Each slide is a separate XML file, so subagents can edit in parallel. In your prompt to subagents, include:
 - The slide file path(s) to edit
 - **"Use the Edit tool for all changes"**
 - The formatting rules and common pitfalls below

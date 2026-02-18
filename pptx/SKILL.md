@@ -13,6 +13,7 @@ license: Proprietary. LICENSE.txt has complete terms
 | Read/analyze content | `python -m markitdown presentation.pptx` |
 | Edit or create from template | Read [editing.md](editing.md) |
 | Create from scratch | Read [pptxgenjs.md](pptxgenjs.md) |
+| Generate optional AI illustrations | `python scripts/generate_illustrations.py --spec assets/illustrations.spec.example.json --deck demo` |
 
 ---
 
@@ -45,6 +46,27 @@ python scripts/office/unpack.py presentation.pptx unpacked/
 **Read [pptxgenjs.md](pptxgenjs.md) for full details.**
 
 Use when no template or reference presentation is available.
+
+---
+
+## Optional AI Illustrations
+
+Use this when the deck needs custom images and the mode is `illustrations=ai`.
+
+1. Prepare an image spec JSON (start from `assets/illustrations.spec.example.json`).
+2. Generate assets and map:
+   ```bash
+   python scripts/generate_illustrations.py --spec assets/illustrations.spec.example.json --deck my-deck
+   ```
+3. Use the generated `illustration-map.json` to insert images:
+   - Scratch decks: add images in your `pptxgenjs` code.
+   - Template workflow: replace image/media targets in unpacked slides and rels.
+4. If a generation fails, keep placeholder visuals instead of blocking deck assembly.
+
+Notes:
+- The script uses `OPENAI_API_KEY` from environment, or falls back to `--env-file` (default: `/home/pascal/.agent/skills/.env`).
+- `.env` CRLF line endings are normalized automatically.
+- If `openai` SDK is missing in your default Python, pass a Python executable with dependencies installed via `--python`.
 
 ---
 
@@ -230,3 +252,4 @@ pdftoppm -jpeg -r 150 -f N -l N output.pdf slide-fixed
 - `npm install -g pptxgenjs` - creating from scratch
 - LibreOffice (`soffice`) - PDF conversion (auto-configured for sandboxed environments via `scripts/office/soffice.py`)
 - Poppler (`pdftoppm`) - PDF to images
+- Optional for AI illustrations: Python env with `openai` + `Pillow` and the installed `imagegen` skill
