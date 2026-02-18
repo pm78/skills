@@ -205,25 +205,82 @@ Then consume `output/imagegen/my-deck/illustration-map.json`:
 
 ```javascript
 const fs = require("fs");
+const { execFileSync } = require("child_process");
+
+// Read actual pixel dimensions to preserve aspect ratio.
+// Do NOT use sizing:{type:"cover"} — it stretches images when the box ratio
+// doesn't match the image ratio.
+function getImageDims(imgPath) {
+  try {
+    const out = execFileSync("python3", [
+      "-c",
+      `from PIL import Image; i=Image.open(${JSON.stringify(imgPath)}); print(i.size[0],i.size[1])`
+    ], { encoding: "utf8" }).trim();
+    const [w, h] = out.split(" ").map(Number);
+    return (w > 0 && h > 0) ? { w, h } : null;
+  } catch { return null; }
+}
+
+// Scale image to fit inside box, preserving aspect ratio, centered.
+function fitInBox(imgW, imgH, box) {
+  const imgAspect = imgW / imgH;
+  const boxAspect = box.w / box.h;
+  let fw, fh;
+  if (imgAspect >= boxAspect) { fw = box.w; fh = box.w / imgAspect; }
+  else                         { fh = box.h; fw = box.h * imgAspect; }
+  return { x: box.x + (box.w - fw) / 2, y: box.y + (box.h - fh) / 2, w: fw, h: fh };
+}
+
 const map = JSON.parse(fs.readFileSync("output/imagegen/my-deck/illustration-map.json", "utf8"));
 
 for (const img of map.generated) {
   const slide = slidesByNumber[img.slide]; // your own lookup table
   if (!slide) continue;
 
-  const box = img.placement || { x: 5.2, y: 1.0, w: 4.2, h: 3.6 };
-  slide.addImage({
-    path: img.path,
-    x: box.x,
-    y: box.y,
-    w: box.w,
-    h: box.h,
-    sizing: { type: "cover", w: box.w, h: box.h }
-  });
+  const box   = img.placement || { x: 5.2, y: 1.0, w: 4.2, h: 3.6 };
+  const dims  = getImageDims(img.path);
+  const place = dims ? fitInBox(dims.w, dims.h, box) : box;
+  slide.addImage({ path: img.path, x: place.x, y: place.y, w: place.w, h: place.h });
 }
 ```
 
 If `map.failed` has entries, keep placeholders and continue deck generation.
+
+### Z-order: always add illustrations first
+
+Elements are rendered in the order they are added — last added = on top. Add the illustration **before** text, logos, and decorative shapes so they always render above the image:
+
+```javascript
+// ✅ CORRECT: illustration first, everything else on top
+addIll(slide, slideNum, box);
+slide.addImage({ path: LOGO_PATH, ... });   // logo visible on top of illustration
+slide.addText("Title", { ... });             // text visible on top of illustration
+
+// ❌ WRONG: illustration last — it covers text and logo
+slide.addText("Title", { ... });
+slide.addImage({ path: LOGO_PATH, ... });
+addIll(slide, slideNum, box);                // buries everything underneath
+```
+
+### Preventing text–image overlap in two-column layouts
+
+When an illustration occupies the right portion of a slide (e.g. x=5.2 onwards), constrain every text box width so its right edge stays clear of the image left edge. Leave at least 0.15" of breathing room:
+
+```javascript
+// Illustration starts at x = 5.2
+// Safe text column: x=0.42, w=4.6  →  right edge = 5.02  (0.18" gap)
+
+slide.addText("Long title that would otherwise overflow", {
+  x: 0.42, w: 4.6,   // ✅ right edge 5.02 — clear of illustration
+  h: 1.4,             // increase h to accommodate wrapping at large font sizes
+  fontSize: 38, ...
+});
+
+// ❌ WRONG: w=8.5 reaches x=8.92 — deep into the illustration area
+slide.addText("Title", { x: 0.42, w: 8.5, fontSize: 38, ... });
+```
+
+Also move logos/badges into the same text column (x < image start) so they are never hidden behind an illustration.
 
 ---
 

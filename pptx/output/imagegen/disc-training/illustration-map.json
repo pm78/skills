@@ -1,0 +1,115 @@
+{
+  "deck": "disc-training",
+  "output_dir": "output/imagegen/disc-training",
+  "generated": [
+    {
+      "slide": 1,
+      "path": "output/imagegen/disc-training/slide-01-cover.png",
+      "prompt": "Elegant corporate leadership scene: confident diverse professionals around a modern meeting table with soft teal ambient lighting, editorial illustration style, minimal and sophisticated, dark navy background tones",
+      "placement": {
+        "x": 5.5,
+        "y": 0.5,
+        "w": 4.3,
+        "h": 4.8
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 2,
+      "path": "output/imagegen/disc-training/slide-02-agenda.png",
+      "prompt": "Abstract roadmap of interconnected glowing nodes and paths representing a training journey, soft teal and navy palette, modern flat editorial illustration",
+      "placement": {
+        "x": 6.8,
+        "y": 1.1,
+        "w": 2.9,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 4,
+      "path": "output/imagegen/disc-training/slide-04-disc-intro.png",
+      "prompt": "Abstract illustration of four coloured quadrants radiating from a central point representing human behavioural styles, soft pastel red, orange, green, blue, minimal geometric editorial style",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 7,
+      "path": "output/imagegen/disc-training/slide-07-dominant.png",
+      "prompt": "Bold decisive executive confidently leading a presentation, strong confident posture, minimal illustration style, warm red accent tones, modern editorial corporate art",
+      "placement": {
+        "x": 4.7,
+        "y": 2.6,
+        "w": 5.0,
+        "h": 2.65
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 8,
+      "path": "output/imagegen/disc-training/slide-08-influent.png",
+      "prompt": "Charismatic communicator energetically presenting to a small enthusiastic group, warm amber and orange tones, uplifting editorial illustration style",
+      "placement": {
+        "x": 4.7,
+        "y": 2.6,
+        "w": 5.0,
+        "h": 2.65
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 9,
+      "path": "output/imagegen/disc-training/slide-09-stable.png",
+      "prompt": "Calm supportive colleague carefully helping a team member, harmonious green tones, soft warm light, serene minimal editorial illustration",
+      "placement": {
+        "x": 4.7,
+        "y": 2.6,
+        "w": 5.0,
+        "h": 2.65
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 10,
+      "path": "output/imagegen/disc-training/slide-10-conscientieux.png",
+      "prompt": "Precise analytical professional reviewing detailed charts and data on a large monitor, cool blue tones, structured methodical editorial illustration",
+      "placement": {
+        "x": 4.7,
+        "y": 2.6,
+        "w": 5.0,
+        "h": 2.65
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 16,
+      "path": "output/imagegen/disc-training/slide-16-team.png",
+      "prompt": "Vibrant high-performing diverse team collaborating around a bright workspace, colourful post-its and whiteboards, energetic collaborative editorial illustration",
+      "placement": {
+        "x": 6.0,
+        "y": 1.0,
+        "w": 3.7,
+        "h": 4.3
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 19,
+      "path": "output/imagegen/disc-training/slide-19-conclusion.png",
+      "prompt": "Inspiring abstract illustration of a lone leader standing at the top of a mountain of stepping stones, overlooking a bright horizon, teal and navy tones, editorial minimal style",
+      "placement": {
+        "x": 5.8,
+        "y": 1.4,
+        "w": 3.9,
+        "h": 3.0
+      },
+      "status": "generated"
+    }
+  ],
+  "failed": []
+}

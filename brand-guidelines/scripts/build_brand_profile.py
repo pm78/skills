@@ -227,13 +227,15 @@ def extract_pptx_profile(path: Path) -> dict:
     for name in names:
         if not name.startswith("ppt/media/"):
             continue
+        if name.endswith("/"):
+            continue
         lower = name.lower()
         if "logo" in lower:
             logos.append({"path": name, "source": "pptx-media:logo-hint"})
 
     if not logos:
         for name in names:
-            if name.startswith("ppt/media/"):
+            if name.startswith("ppt/media/") and not name.endswith("/"):
                 logos.append({"path": name, "source": "pptx-media:first-image"})
                 break
 
@@ -272,13 +274,15 @@ def extract_docx_profile(path: Path) -> dict:
     for name in names:
         if not name.startswith("word/media/"):
             continue
+        if name.endswith("/"):
+            continue
         lower = name.lower()
         if "logo" in lower:
             logos.append({"path": name, "source": "docx-media:logo-hint"})
 
     if not logos:
         for name in names:
-            if name.startswith("word/media/"):
+            if name.startswith("word/media/") and not name.endswith("/"):
                 logos.append({"path": name, "source": "docx-media:first-image"})
                 break
 

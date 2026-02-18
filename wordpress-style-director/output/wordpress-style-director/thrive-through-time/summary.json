@@ -1,0 +1,55 @@
+{
+  "mode": "creative",
+  "site_name": "Thrive Through Time",
+  "site_url": "www.thrivethroughtime.com",
+  "theme": "Timeless Wisdom",
+  "dark_mode": false,
+  "palette": {
+    "bg": "#FAF9F6",
+    "bg_alt": "#FFFFFF",
+    "surface": "#F3F0E8",
+    "surface_hover": "#EDE9DF",
+    "text": "#2D2926",
+    "text_secondary": "#5C5650",
+    "muted": "#8C8379",
+    "gold": "#9E7C0C",
+    "gold_dark": "#7B6000",
+    "gold_light": "#C5A55A",
+    "gold_wash": "#F5EFD6",
+    "bronze": "#6B5210",
+    "border": "#E2DDD3",
+    "border_light": "#EDE9E0"
+  },
+  "fonts": {
+    "heading": "Cormorant Garamond",
+    "body": "Source Sans 3",
+    "code": "JetBrains Mono / Fira Code",
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap"
+  },
+  "accessibility": {
+    "link_color_contrast_on_white": "6.1:1 (WCAG AA pass)",
+    "text_contrast_on_bg": "14.5:1 (WCAG AAA pass)",
+    "focus_visible": "2px gold outline on all interactive elements",
+    "prefers_reduced_motion": "supported",
+    "prefers_contrast_high": "supported",
+    "skip_link": "styled"
+  },
+  "responsive_breakpoints": {
+    "phone": "max-width: 600px",
+    "tablet": "601px – 1024px",
+    "desktop": "1025px+"
+  },
+  "design_principles_addressed": [
+    "Minimalism & White Space — warm off-white bg, generous spacing scale, 740px content max-width",
+    "Bold Typography & Visual Hierarchy — Cormorant Garamond headings with clamp() fluid sizing, drop caps, gold accent bars",
+    "User-Centric Navigation — uppercase nav with animated underline, search with gold focus glow, category pills",
+    "Engaging Visuals & Multimedia — rounded images, hover zoom on desktop, styled galleries, embedded video shadow",
+    "Mobile-First & Responsive — 3 breakpoints (phone/tablet/desktop), full-width buttons on mobile, print styles",
+    "Accessibility & Inclusivity — WCAG AA contrast, focus-visible outlines, prefers-reduced-motion, prefers-contrast, skip links",
+    "Strategic CTAs — gold buttons with hover lift, outline variant, styled newsletter/CTA blocks"
+  ],
+  "outputs": {
+    "combined_css": "additional-css-combined.css"
+  },
+  "created_at": "2026-02-18T14:27:32"
+}

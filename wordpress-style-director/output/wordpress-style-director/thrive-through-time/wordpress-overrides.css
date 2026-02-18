@@ -1,0 +1,119 @@
+/* WordPress presentation overrides */
+body,
+.site,
+.site-content,
+#page {
+  background: var(--wsd-bg) !important;
+  color: var(--wsd-text) !important;
+  font-family: var(--wsd-font-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.entry-title,
+.site-title {
+  font-family: var(--wsd-font-heading);
+  color: var(--wsd-text);
+  letter-spacing: -0.01em;
+}
+
+.entry-content,
+.entry-content p,
+.entry-content li,
+.widget,
+.widget p,
+.widget li {
+  text-align: left !important;
+  text-justify: auto !important;
+  line-height: var(--wsd-line);
+  color: var(--wsd-text);
+}
+
+.entry-content {
+  max-width: var(--wsd-content-max);
+}
+
+.entry-content a,
+.widget a,
+a {
+  color: var(--wsd-link);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+.entry-content a:hover,
+.widget a:hover,
+a:hover {
+  color: var(--wsd-link-hover);
+}
+
+blockquote {
+  margin: 1.4rem 0;
+  padding: 0.9rem 1rem;
+  border-left: 4px solid var(--wsd-primary);
+  background: color-mix(in srgb, var(--wsd-surface) 88%, transparent);
+}
+
+pre,
+code {
+  background: color-mix(in srgb, var(--wsd-surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--wsd-border) 30%, transparent);
+}
+
+pre {
+  border-radius: 8px;
+  padding: 0.8rem 0.9rem;
+  overflow-x: auto;
+}
+
+img,
+.wp-post-image {
+  border-radius: var(--wsd-radius);
+}
+
+.entry-content .sources-block,
+.entry-content .sources-list,
+.entry-content .sources-list li {
+  text-align: left !important;
+  text-justify: auto !important;
+  word-spacing: normal !important;
+  letter-spacing: normal !important;
+}
+
+.entry-content .sources-list {
+  padding-left: 1.2rem;
+}
+
+.entry-content .citation {
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.widget,
+.sidebar .widget,
+#secondary .widget {
+  background: color-mix(in srgb, var(--wsd-surface) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--wsd-border) 35%, transparent);
+  border-radius: var(--wsd-radius);
+  padding: 1rem;
+}
+
+button,
+input[type='submit'],
+.wp-block-button__link {
+  background: var(--wsd-primary);
+  color: var(--wsd-bg);
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+}
+
+button:hover,
+input[type='submit']:hover,
+.wp-block-button__link:hover {
+  background: var(--wsd-accent);
+}

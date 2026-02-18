@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "air-consulting-services",
+  "brand_name": "Air Consulting Services",
+  "captured_at": "2026-02-18T10:41:32.824111+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://www.airconsulting.fr"
+    },
+    {
+      "type": "asset",
+      "value": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/air-consulting-services-logo.png"
+    }
+  ],
+  "logos": [
+    {
+      "path": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/air-consulting-services-logo.png",
+      "source": "skill-asset:primary-logo"
+    },
+    {
+      "url": "https://da32ev14kd4yl.cloudfront.net/versioned/airconsulting/Logo%20AIr%20Consulting%20Services.png",
+      "source": "img:logo-hint"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#666666",
+      "count": 23
+    },
+    {
+      "hex": "#1F2020",
+      "count": 12
+    },
+    {
+      "hex": "#FFFFFF",
+      "count": 8
+    },
+    {
+      "hex": "#545768",
+      "count": 3
+    },
+    {
+      "hex": "#559297",
+      "count": 2
+    },
+    {
+      "hex": "#082D38",
+      "count": 2
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Montserrat",
+      "count": 39
+    },
+    {
+      "name": "Arial",
+      "count": 14
+    },
+    {
+      "name": "Rubik",
+      "count": 5
+    },
+    {
+      "name": "Century Gothic",
+      "count": 4
+    }
+  ],
+  "guidelines": [],
+  "policies": [],
+  "style_notes": [
+    "No public brand guideline page detected on homepage.",
+    "Homepage contains a non-linked mention of a charte RSE.",
+    "Use Montserrat for headings and Arial for body text as practical defaults."
+  ]
+}
