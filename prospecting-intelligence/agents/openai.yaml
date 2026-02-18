@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prospecting Intelligence"
+  short_description: "Turn market studies into scored prospect pipelines with contacts, outreach angles, and GDPR compliance"
+  default_prompt: "Analyze my market context, build an ICP, identify and score target accounts using LinkedIn, map decision-maker contacts, and generate personalized outreach angles with GDPR compliance."

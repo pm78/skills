@@ -1,0 +1,42 @@
+{
+  "AI": [
+    "openai",
+    "gpt-5",
+    "ai safety",
+    "agentic ai",
+    "foundation model",
+    "inference",
+    "benchmark"
+  ],
+  "Health": [
+    "digital health",
+    "clinical trial",
+    "public health",
+    "medtech",
+    "biotech",
+    "WHO"
+  ],
+  "GeoPolitics": [
+    "geopolitics",
+    "europe policy",
+    "US China",
+    "defense",
+    "trade sanctions",
+    "NATO"
+  ],
+  "France": [
+    "France economy",
+    "France policy",
+    "French tech",
+    "France regulation",
+    "Paris startup"
+  ],
+  "Payments": [
+    "instant payments",
+    "SEPA instant",
+    "PSD3",
+    "open banking",
+    "merchant acquiring",
+    "payment fraud"
+  ]
+}

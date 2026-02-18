@@ -1,0 +1,85 @@
+{
+  "campaign": {
+    "name": "FR B2B Coaching Pilot",
+    "assistantName": "FR B2B Appointment Setter",
+    "language": "fr-FR",
+    "regions": ["FR"],
+    "neverSay": [
+      "garantie absolue",
+      "offre valable uniquement aujourd'hui"
+    ]
+  },
+  "seller": {
+    "companyName": "Example Advisory",
+    "callerName": "Camille",
+    "callerRole": "Partenaire croissance"
+  },
+  "product": {
+    "name": "Programme de coaching dirigeants",
+    "offer": "un diagnostic et un plan d'action leadership",
+    "valueProps": [
+      "Structurer la montée en compétence des managers en 90 jours",
+      "Réduire les frictions de communication entre équipes",
+      "Renforcer la rétention des profils clés"
+    ],
+    "proofPoints": [
+      "Déployé auprès d'entreprises SaaS de 200 à 2000 collaborateurs",
+      "Approche orientée objectifs mesurables"
+    ]
+  },
+  "persona": {
+    "title": "DRH / Responsable développement RH",
+    "icp": "Entreprises françaises de 200 à 2000 salariés",
+    "pains": [
+      "managers promus sans accompagnement",
+      "désalignement managérial"
+    ]
+  },
+  "meeting": {
+    "goal": "planifier un échange découverte",
+    "lengthMinutes": 20,
+    "bookingLink": "https://calendar.example.com/intro"
+  },
+  "qualification": {
+    "questions": [
+      "Comment accompagnez-vous aujourd'hui les nouveaux managers ?",
+      "Quelles priorités RH avez-vous sur le semestre ?",
+      "Qui intervient dans la décision sur ce sujet ?"
+    ],
+    "disqualifiers": [
+      "pas de sujet leadership cette année",
+      "effectif hors cible"
+    ]
+  },
+  "compliance": {
+    "dncLanguage": "Bien sûr, je vous retire de nos appels et nous ne vous recontacterons plus.",
+    "recordingEnabled": false,
+    "aiDisclosure": {
+      "enabled": true,
+      "message": "Je suis un assistant IA qui appelle pour le compte d'Example Advisory."
+    },
+    "dialingPolicy": {
+      "defaultTimezone": "Europe/Paris",
+      "timeWindows": "10:00-13:00,14:00-20:00",
+      "maxAttempts30d": 4,
+      "refusalCooldownDays": 60
+    }
+  },
+  "voicemail": {
+    "enabled": true,
+    "message": "Bonjour, ici Camille de Example Advisory. Je vous appelais au sujet d'un échange sur l'accompagnement des managers. Vous pouvez nous rappeler au +33102030405. Merci et bonne journée."
+  },
+  "retell": {
+    "baseUrl": "https://api.retellai.com",
+    "llmId": "llm_replace_me",
+    "voiceId": "cartesia-Emma",
+    "language": "fr-FR",
+    "mode": "dynamic",
+    "webhookUrl": "https://example.com/webhooks/retell",
+    "fromNumber": "+33102030405",
+    "beginMessageDelayMs": 700,
+    "maxCallDurationMs": 1800000,
+    "ringDurationMs": 30000,
+    "sttMode": "fast"
+  }
+}
