@@ -92,6 +92,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--font-heading", default="", help="Override heading font")
     parser.add_argument("--font-body", default="", help="Override body font")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--deploy", action="store_true",
+                        help="Auto-deploy the generated CSS to WordPress via REST API")
+    parser.add_argument("--wp-url", default="",
+                        help="WordPress site URL for deployment (e.g. https://example.com)")
+    parser.add_argument("--env-file", default="",
+                        help="Path to .env file with WP_APP_USERNAME and WP_APP_PASSWORD")
+    parser.add_argument("--skip-verify", action="store_true",
+                        help="Skip front-end verification after deployment")
     return parser.parse_args()
 
 
@@ -679,6 +687,33 @@ def main() -> None:
     print(f"- {out / 'wordpress-overrides.css'}")
     print(f"- {out / 'additional-css-combined.css'}")
     print(f"- {out / 'summary.json'}")
+
+    # --- Auto-deploy to WordPress if requested ---
+    if args.deploy:
+        wp_url = (args.wp_url or args.site_url or "").strip()
+        if not wp_url:
+            print("\n[deploy] ERROR: --wp-url is required for deployment")
+            raise SystemExit(1)
+
+        from deploy_to_wordpress import deploy as wp_deploy
+
+        print(f"\n{'=' * 50}")
+        print("DEPLOYING TO WORDPRESS")
+        print(f"{'=' * 50}")
+        css_file = str(out / "additional-css-combined.css")
+        result = wp_deploy(
+            css_file=css_file,
+            wp_url=wp_url,
+            site_name=args.site_name,
+            env_file=args.env_file or None,
+            skip_verify=args.skip_verify,
+        )
+        # Append deployment info to summary
+        summary["deployment"] = result
+        (out / "summary.json").write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"\n[deploy] Deployment complete. Summary updated.")
 
 
 if __name__ == "__main__":

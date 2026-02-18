@@ -66,6 +66,242 @@
 
 
 /* =========================================================
+   1b. DARK MODE NEUTRALIZATION
+   Nisarg theme applies body.dark with #121212/#212121 backgrounds
+   and rgba(255,255,255,0.87) text. Override ALL dark rules to
+   enforce our warm parchment palette.
+   ========================================================= */
+
+/* --- Body & backgrounds --- */
+body.dark {
+  background-color: var(--ttt-bg) !important;
+  color: var(--ttt-text) !important;
+}
+
+.dark .main-navigation {
+  background-color: var(--ttt-bg) !important;
+}
+
+.dark .post-content,
+.dark .single-post-content,
+.dark .post-comments,
+.dark .comments-area,
+.dark .post-comments .comments-area,
+.dark .archive-page-title > span,
+.dark .taxonomy-description span p,
+.dark .search-page-title span,
+.dark .page-builder-boxed,
+.dark .posts-navigation .nav-links,
+.dark .post-navigation .nav-links,
+.dark .nav-previous,
+.dark .nav-next,
+.dark .next-post,
+.dark .prev-post,
+.dark .pagination .page-numbers,
+.dark .author-bio,
+.dark .author-posts-section-title,
+.dark .btn-default,
+.dark blockquote,
+.dark input,
+.dark select,
+.dark textarea,
+.dark thead,
+.dark .wp-block-calendar table th,
+.dark .wp-caption {
+  background: var(--ttt-bg-alt) !important;
+}
+
+.dark #secondary .widget {
+  background: var(--ttt-bg-alt) !important;
+  color: var(--ttt-text) !important;
+}
+
+.dark .main-navigation .primary-menu > li > .sub-menu,
+.dark .sub-menu {
+  background-color: var(--ttt-bg-alt) !important;
+  border-color: var(--ttt-border) !important;
+  box-shadow: var(--ttt-shadow) !important;
+}
+
+.dark #infinite-handle span {
+  background-color: var(--ttt-gold-dark) !important;
+}
+
+.dark tbody tr:nth-child(odd) {
+  background-color: var(--ttt-surface) !important;
+}
+
+/* --- Text colors --- */
+body.dark,
+.dark .entry-summary,
+.dark .entry-content,
+.dark .btn-default,
+.dark .btn-default:visited,
+.dark #secondary .widget,
+.dark #secondary .widget a,
+.dark #secondary .widget #recentcomments a,
+.dark .main-navigation .navbar-brand,
+.dark .main-navigation .navbar-brand:hover,
+.dark .main-navigation .navbar-brand:focus,
+.dark .main-navigation .primary-menu > li > a,
+.dark .main-navigation .primary-menu > li > .sub-menu > li > a,
+.dark .main-navigation ul ul a,
+.dark #socialMenuResponsive a,
+.dark #desktop-search-icon,
+.dark #desktop-search-icon .fa,
+.dark .main-navigation .primary-menu .primary-social-icon,
+.dark .main-navigation .primary-menu .primary-social-icon .fa,
+.dark .next-prev-text,
+.dark .next-post a,
+.dark .prev-post a,
+.dark input[type=text],
+.dark input[type=email],
+.dark input[type=text]:focus,
+.dark input[type=email]:focus,
+.dark textarea:focus,
+.dark #infinite-handle span,
+.dark .masonry #infinite-handle span,
+.dark .wp-block-calendar table caption,
+.dark .wp-block-calendar table tbody,
+.dark select,
+.dark .wp-block-calendar table th,
+.dark .dropdown-toggle::after {
+  color: var(--ttt-text) !important;
+}
+
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark .entry-header .entry-title a,
+.dark thead,
+.dark .author-social-links li a .fa,
+.dark .author-bio,
+.dark #secondary .widget .widget-title .rsswidget,
+.dark #secondary .widget .rsswidget,
+.dark #secondary .widget table caption,
+.dark #secondary .widget #recentcomments,
+.dark blockquote,
+.dark .pagination .page-numbers,
+.dark .nav-links .fa {
+  color: var(--ttt-text) !important;
+}
+
+.dark .entry-meta,
+.dark .entry-meta a,
+.dark .taxonomy-description span p,
+.dark byline a,
+.dark .cat-links a,
+.dark .tags-links a,
+.dark .image-attachment .entry-meta,
+.dark .gallery-caption,
+.dark .comment-metadata time,
+.dark #navbar-search-box input,
+.dark .wp-block-image figcaption {
+  color: var(--ttt-muted) !important;
+}
+
+.dark .search-page-title,
+.dark .archive-page-title,
+.dark .author-social-links li a .fa,
+.dark .taxonomy-description {
+  color: var(--ttt-text) !important;
+}
+
+.dark code,
+.dark pre {
+  background-color: #2D2926 !important;
+  color: #F3F0E8 !important;
+}
+
+/* --- Borders --- */
+.dark input,
+.dark textarea,
+.dark .post-content hr,
+.dark #secondary .widget li,
+.dark #secondary .widget hr,
+.dark .comment-list .depth-1 {
+  border-color: var(--ttt-border) !important;
+}
+
+.dark .main-navigation .primary-menu > li > a,
+.dark #socialMenuResponsive a,
+.dark #desktop-search-icon,
+.dark #navbar-search-box,
+.dark thead {
+  border-color: var(--ttt-border) !important;
+}
+
+.dark .main-navigation .menu-toggle .icon-bar {
+  background-color: var(--ttt-text) !important;
+}
+
+/* --- Dark mode nav hover --- */
+.dark .main-navigation .primary-menu > li > a:hover,
+.dark .main-navigation .primary-menu > li > .sub-menu > li > a:hover {
+  color: var(--ttt-gold-dark) !important;
+}
+
+/* --- Dark mode links in content --- */
+.dark .entry-content a,
+.dark .entry-summary a {
+  color: var(--ttt-gold-dark) !important;
+}
+
+.dark .entry-content a:hover,
+.dark .entry-summary a:hover {
+  color: var(--ttt-bronze) !important;
+}
+
+/* --- Dark mode sidebar links --- */
+.dark #secondary .widget a {
+  color: var(--ttt-gold-dark) !important;
+}
+
+.dark #secondary .widget a:hover {
+  color: var(--ttt-bronze) !important;
+}
+
+/* --- Dark mode widget title --- */
+.dark #secondary .widget .widget-title {
+  color: var(--ttt-text) !important;
+  background: transparent !important;
+  border-bottom: 2px solid var(--ttt-gold-light) !important;
+}
+
+/* --- Dark mode dropdown toggle --- */
+.dark .dropdown-toggle,
+.dark .dropdown-toggle::after,
+.dark .dropdown-toggle:hover,
+.dark .dropdown-toggle:focus {
+  background: transparent !important;
+  color: var(--ttt-text) !important;
+}
+
+/* --- Dark mode search box --- */
+.dark #navbar-search-box input {
+  background: var(--ttt-bg-alt) !important;
+  color: var(--ttt-text) !important;
+  border-color: var(--ttt-border) !important;
+}
+
+/* --- Dark mode buttons --- */
+.dark .btn-default {
+  background: var(--ttt-gold-dark) !important;
+  color: #FFFFFF !important;
+  border-color: var(--ttt-gold-dark) !important;
+}
+
+/* --- Keep header text white (over dark header image) --- */
+.dark .site-title,
+.dark .site-title a,
+.dark .site-description {
+  color: #FFFFFF !important;
+}
+
+/* =========================================================
    2. GLOBAL BASE  (Minimalism & White Space)
    ========================================================= */
 *,
@@ -74,10 +310,7 @@
   box-sizing: border-box;
 }
 
-body,
-.site,
-.site-content,
-#page {
+body {
   background-color: var(--ttt-bg) !important;
   color: var(--ttt-text) !important;
   font-family: var(--ttt-font-body) !important;
@@ -88,6 +321,13 @@ body,
   text-rendering: optimizeLegibility;
 }
 
+.site-content,
+#content,
+#primary {
+  background-color: var(--ttt-bg);
+  color: var(--ttt-text);
+}
+
 
 /* =========================================================
    3. TYPOGRAPHY & VISUAL HIERARCHY
@@ -95,7 +335,6 @@ body,
 h1, h2, h3, h4, h5, h6,
 .entry-title,
 .page-title,
-.site-title,
 .wp-block-heading {
   font-family: var(--ttt-font-heading) !important;
   color: var(--ttt-text);
@@ -162,8 +401,8 @@ h6 {
 .widget li {
   text-align: left !important;
   line-height: var(--ttt-line-height);
-  color: var(--ttt-text);
-  font-size: 1.125rem;
+  color: var(--ttt-text) !important;
+  font-size: 1.2rem !important;
 }
 
 .entry-content {
@@ -174,11 +413,22 @@ h6 {
 
 .entry-content p {
   margin-bottom: var(--ttt-space-md);
+  font-size: 1.2rem !important;
+}
+
+/* Article excerpt / summary on homepage */
+.entry-summary,
+.entry-summary p,
+.post-card p,
+article .entry-summary {
+  font-size: 1.15rem !important;
+  line-height: var(--ttt-line-height);
+  color: var(--ttt-text) !important;
 }
 
 /* Lead paragraph — slightly larger, softer */
 .entry-content > p:first-of-type {
-  font-size: 1.25rem;
+  font-size: 1.35rem !important;
   color: var(--ttt-text-secondary);
   line-height: 1.7;
 }
@@ -240,8 +490,7 @@ nav.main-nav {
 
 .main-navigation a,
 .primary-menu a,
-.site-header .menu a,
-nav a {
+.site-header .menu a {
   color: var(--ttt-text) !important;
   text-decoration: none !important;
   padding: 0.5rem 0;
@@ -251,14 +500,13 @@ nav a {
 
 .main-navigation a:hover,
 .primary-menu a:hover,
-.site-header .menu a:hover,
-nav a:hover {
+.site-header .menu a:hover {
   color: var(--ttt-gold-dark) !important;
 }
 
 /* Animated underline on nav hover */
-.main-navigation a::after,
-.primary-menu a::after {
+.main-navigation li > a::after,
+.primary-menu li > a::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -269,38 +517,40 @@ nav a:hover {
   transition: width 0.3s var(--ttt-ease);
 }
 
-.main-navigation a:hover::after,
-.primary-menu a:hover::after,
+.main-navigation li > a:hover::after,
+.primary-menu li > a:hover::after,
 .main-navigation .current-menu-item > a::after,
 .primary-menu .current-menu-item > a::after {
   width: 100%;
 }
 
-/* Header */
+/* Header — preserve theme header image */
 .site-header,
 header#masthead {
   border-bottom: 1px solid var(--ttt-border);
-  background: var(--ttt-bg) !important;
+  /* Do NOT override background — Nisarg uses an inline background-image */
 }
 
-/* Site title */
+/* Site title — keep white for dark header image */
 .site-title,
 .site-title a {
   font-family: var(--ttt-font-heading) !important;
   font-size: clamp(1.5rem, 3vw, 2rem) !important;
   font-weight: 700 !important;
-  color: var(--ttt-text) !important;
+  color: #FFFFFF !important;
   text-decoration: none !important;
   letter-spacing: -0.02em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 .site-description {
   font-family: var(--ttt-font-body);
   font-size: 0.85rem;
-  color: var(--ttt-muted);
+  color: rgba(255, 255, 255, 0.85) !important;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-weight: 400;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 /* Search */
@@ -679,24 +929,54 @@ code:not(pre code) {
 /* =========================================================
    14. SIDEBAR & WIDGETS
    ========================================================= */
-.widget,
-.sidebar .widget,
-#secondary .widget {
-  background: var(--ttt-bg-alt);
-  border: 1px solid var(--ttt-border);
-  border-radius: var(--ttt-radius-lg);
-  padding: var(--ttt-space-md);
-  margin-bottom: var(--ttt-space-md);
-  box-shadow: var(--ttt-shadow-sm);
+#secondary,
+aside.sidebar,
+.sidebar {
+  background: var(--ttt-bg) !important;
 }
 
-.widget-title {
+#secondary .widget,
+aside.sidebar .widget,
+.sidebar .widget,
+body .widget {
+  background: var(--ttt-bg-alt) !important;
+  border: 1px solid var(--ttt-border) !important;
+  border-radius: var(--ttt-radius-lg);
+  padding: var(--ttt-space-md) !important;
+  margin-bottom: var(--ttt-space-md);
+  box-shadow: var(--ttt-shadow-sm);
+  color: var(--ttt-text) !important;
+}
+
+#secondary .widget *,
+aside.sidebar .widget *,
+.sidebar .widget * {
+  color: var(--ttt-text);
+}
+
+#secondary .widget a,
+aside.sidebar .widget a,
+.sidebar .widget a {
+  color: var(--ttt-gold-dark) !important;
+}
+
+#secondary .widget a:hover,
+aside.sidebar .widget a:hover,
+.sidebar .widget a:hover {
+  color: var(--ttt-bronze) !important;
+}
+
+#secondary .widget-title,
+aside.sidebar .widget-title,
+.sidebar .widget-title,
+body .widget-title {
   font-family: var(--ttt-font-heading) !important;
   font-size: 1.3rem;
-  color: var(--ttt-text);
+  color: var(--ttt-text) !important;
+  background: transparent !important;
   margin-bottom: var(--ttt-space-sm);
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--ttt-gold-light);
+  border-bottom: 2px solid var(--ttt-gold-light) !important;
 }
 
 

@@ -1,0 +1,163 @@
+{
+  "deck": "mbti-training",
+  "output_dir": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training",
+  "generated": [
+    {
+      "slide": 1,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-01-cover.png",
+      "prompt": "Elegant corporate coaching scene: a diverse group of senior professionals in a modern glass-walled meeting room engaged in deep reflective discussion, warm teal ambient lighting, editorial illustration style, dark navy background tones, sophisticated and aspirational atmosphere",
+      "placement": {
+        "x": 5.5,
+        "y": 0.5,
+        "w": 4.3,
+        "h": 4.8
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 5,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-05-origins.png",
+      "prompt": "Historical portrait-style illustration showing the evolution of personality psychology: an old library with books and manuscripts transitioning into modern psychology diagrams, warm sepia tones blending into teal, editorial illustration style, sophisticated academic atmosphere",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 9,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-09-four-axes.png",
+      "prompt": "Abstract geometric illustration of four intersecting axes creating quadrants, each quadrant subtly different in color and energy: one vibrant and outward, one reflective and inward, one structured, one flowing. Minimal modern editorial style, teal and navy palette with purple, green, blue and orange accents",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 21,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-21-sixteen-types.png",
+      "prompt": "Abstract mosaic of sixteen distinct personality archetypes represented as interconnected geometric portraits in a 4x4 grid, each with unique subtle colour: purple, green, blue, and orange family tones, modern editorial minimal illustration, sophisticated and diverse",
+      "placement": {
+        "x": 6.0,
+        "y": 1.1,
+        "w": 3.7,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 28,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-28-cognitive-functions.png",
+      "prompt": "Abstract neural network illustration showing eight interconnected cognitive pathways in the human mind, glowing nodes representing different mental processes: sensing, intuiting, thinking, feeling in both extraverted and introverted modes. Deep purple and teal palette, modern editorial scientific illustration",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 34,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-34-stress.png",
+      "prompt": "Dramatic illustration of a professional under pressure: stormy abstract elements swirling around a composed figure who shows signs of strain, contrast between outer chaos and inner struggle, dark teal and deep red accents, modern editorial illustration style",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 40,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-40-communication.png",
+      "prompt": "Elegant illustration of diverse professionals communicating through different styles: speech bubbles of different shapes and colours connecting people, some direct, some flowing, some structured, some warm. Teal and navy palette with personality colour accents, modern editorial style",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 45,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-45-leadership.png",
+      "prompt": "Four distinct leadership silhouettes each representing a different management approach: visionary strategist, inspiring motivator, servant leader, and analytical planner. Each figure with subtle colour accent (purple, green, blue, orange), dark sophisticated background, modern editorial illustration",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 51,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-51-decision.png",
+      "prompt": "Abstract illustration of four different decision-making pathways: one logical and data-driven, one empathetic and values-based, one innovative and visionary, one practical and experiential. Paths converge towards a central glowing decision point. Modern editorial style, teal and purple accents",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 55,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-55-team.png",
+      "prompt": "Vibrant diverse team working together like interlocking puzzle pieces, each person contributing unique strengths, warm collaborative atmosphere with teal accent lighting, modern editorial illustration, sense of synergy and complementarity",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 60,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-60-conflict.png",
+      "prompt": "Two professionals in respectful disagreement finding common ground, abstract tension lines between them gradually transforming into bridges, warm reconciliation tones emerging from cool conflict tones, modern editorial illustration, sophisticated and hopeful",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 64,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-64-coaching.png",
+      "prompt": "Intimate coaching scene: experienced coach and client in deep reflective conversation, warm ambient lighting, sense of trust and growth, subtle teal and navy tones, modern editorial illustration, professional yet empathetic atmosphere",
+      "placement": {
+        "x": 6.2,
+        "y": 1.1,
+        "w": 3.5,
+        "h": 4.2
+      },
+      "status": "generated"
+    },
+    {
+      "slide": 75,
+      "path": "/home/pascal/.claude/skills/pptx/output/imagegen/mbti-training/slide-75-closing.png",
+      "prompt": "Inspiring panoramic illustration: a leader standing at a crossroads with multiple illuminated paths ahead, each path representing growth and possibility, sunrise on the horizon, teal and gold tones, modern editorial minimal style, aspirational and forward-looking",
+      "placement": {
+        "x": 5.8,
+        "y": 1.4,
+        "w": 3.9,
+        "h": 3.0
+      },
+      "status": "generated"
+    }
+  ],
+  "failed": []
+}
