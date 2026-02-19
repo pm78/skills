@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "thrivethroughtime",
+  "brand_name": "Thrive Through Time",
+  "aliases": [
+    "thrive-through-time",
+    "timeless wisdom",
+    "thrivethroughtime.com"
+  ],
+  "captured_at": "2026-02-18T20:10:07+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://thrivethroughtime.com"
+    },
+    {
+      "type": "css",
+      "value": "https://thrivethroughtime.com/wp-content/themes/nisarg/style.css"
+    }
+  ],
+  "logos": [
+    {
+      "url": "https://thrivethroughtime.com/wp-content/uploads/2023/08/cropped-IMG_7302-1.jpg",
+      "source": "yoast:organization-logo"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#FFC107",
+      "count": 30
+    },
+    {
+      "hex": "#607D8B",
+      "count": 12
+    },
+    {
+      "hex": "#ECEFF1",
+      "count": 10
+    },
+    {
+      "hex": "#424242",
+      "count": 8
+    },
+    {
+      "hex": "#212121",
+      "count": 6
+    },
+    {
+      "hex": "#F5F5F5",
+      "count": 4
+    },
+    {
+      "hex": "#FFFFFF",
+      "count": 4
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Lato",
+      "count": 12
+    },
+    {
+      "name": "Source Sans Pro",
+      "count": 10
+    },
+    {
+      "name": "Arial",
+      "count": 2
+    }
+  ],
+  "css_style": {
+    "source_site": "https://thrivethroughtime.com",
+    "theme": "nisarg",
+    "tokens": {
+      "primary_accent": "#FFC107",
+      "link": "#607D8B",
+      "background": "#ECEFF1",
+      "surface": "#F5F5F5",
+      "text_primary": "#424242",
+      "heading": "#212121"
+    },
+    "typography": {
+      "heading_font": "Lato",
+      "body_font": "Source Sans Pro",
+      "fallback": "sans-serif"
+    },
+    "notable_rules": [
+      "Interactive accent color is #FFC107",
+      "Body uses a soft neutral gray background with comfortable contrast",
+      "Links and secondary elements rely on desaturated blue-gray tones"
+    ]
+  },
+  "illustration_style": {
+    "editorial_direction": "Wellness editorial, evidence-aware and optimistic, with natural lifestyle realism.",
+    "rendering": "Modern editorial illustration with subtle texture and soft edges; avoid glossy 3D rendering.",
+    "composition": "Human-centered scenes, clear focal subject, generous negative space for blog header crops.",
+    "mood": "Calm, trustworthy, practical, healthy-aging oriented.",
+    "color_palette": [
+      "#FFC107",
+      "#607D8B",
+      "#ECEFF1",
+      "#424242",
+      "#F5F5F5"
+    ],
+    "motifs": [
+      "healthy routines",
+      "lifelong vitality",
+      "nature-informed wellness",
+      "balanced daily habits"
+    ],
+    "avoid": [
+      "medical fear cues",
+      "alarmist visual metaphors",
+      "neon saturation",
+      "busy collage composition"
+    ]
+  },
+  "guidelines": [],
+  "policies": [],
+  "style_notes": [
+    "WordPress theme: Nisarg",
+    "Use warm amber accents on neutral backgrounds for headers and calls to action.",
+    "Illustrations should support healthy-aging credibility rather than trend-driven visual effects."
+  ]
+}

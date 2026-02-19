@@ -1,4 +1,4 @@
 interface:
   display_name: "Publish Article"
   short_description: "Publish latest Notion draft to WordPress"
-  default_prompt: "Use $publish-article to publish the latest Draft article from My Articles to WordPress and mark it published in Notion."
+  default_prompt: "Use $publish-article to publish the latest Draft article from My Articles to WordPress (default site: lesnewsducoach), auto-resolve categories from Notion/category rules, and mark it published in Notion."

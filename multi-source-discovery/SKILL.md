@@ -24,8 +24,10 @@ Run a daily (or intraday) discovery job across multiple public and API-backed so
 Optional but recommended:
 
 - `OPENAI_API_KEY` (relevance ranking)
+- `OPENAI_MODEL` (optional model override; default `gpt-5.1-mini`)
 - `TAVILY_API_KEY` (web/substack/medium/x discovery)
-- `NEWSAPI_KEY` (news discovery)
+- `NEWSAPI_API_KEY` (news discovery)
+- `NEWSAPI_KEY` (legacy fallback name still accepted by script)
 - `YOUTUBE_API_KEY` (YouTube keyword discovery)
 - `NITTER_BASE_URL` (optional X RSS fallback)
 

@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import mimetypes
 import os
 import re
 import sys
@@ -115,6 +116,48 @@ def wp_request_safe(
         return None, f"HTTP {e.code}: {body[:300]}"
     except Exception as e:
         return None, str(e)
+
+
+def wp_upload_media(
+    api_base: str,
+    auth: str,
+    file_path: str,
+    timeout: int = 60,
+) -> Dict[str, Any]:
+    """Upload a media file to WordPress and return the media object."""
+    path = Path(file_path)
+    if not path.is_file():
+        raise SystemExit(f"Favicon file not found: {file_path}")
+
+    mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+    data = path.read_bytes()
+    url = f"{api_base}/wp-json/wp/v2/media"
+
+    req = urllib.request.Request(url, data=data, method="POST")
+    req.add_header("Authorization", auth)
+    req.add_header("Content-Type", mime)
+    req.add_header("Content-Disposition", f'attachment; filename="{path.name}"')
+
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8", errors="replace"))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        raise SystemExit(f"[media] Upload failed: HTTP {e.code} - {body[:300]}")
+
+
+def set_site_icon(api_base: str, auth: str, media_id: int) -> Dict[str, Any]:
+    """Set WordPress Site Icon (favicon) to a media ID."""
+    url = f"{api_base}/wp-json/wp/v2/settings"
+    result, err = wp_request_safe(
+        url,
+        auth=auth,
+        method="POST",
+        data={"site_icon": media_id},
+    )
+    if not result:
+        raise SystemExit(f"[favicon] Failed to set site icon: {err}")
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -458,6 +501,7 @@ def deploy(
     skip_verify: bool = False,
     cleanup: bool = True,
     css_markers: Optional[List[str]] = None,
+    favicon_file: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Full deployment pipeline. Returns a result dict."""
 
@@ -502,6 +546,20 @@ def deploy(
 
     snippet_id = deploy_snippet(canonical, auth, css_content, site_name)
 
+    favicon_media_id: Optional[int] = None
+    favicon_url: str = ""
+    if favicon_file:
+        print(f"[favicon] Uploading favicon: {favicon_file}")
+        media = wp_upload_media(canonical, auth, favicon_file)
+        media_id = media.get("id")
+        if isinstance(media_id, int):
+            favicon_media_id = media_id
+            favicon_url = str(media.get("source_url", ""))
+            set_site_icon(canonical, auth, media_id)
+            print(f"[favicon] Site icon set to media #{media_id}")
+        else:
+            raise SystemExit("[favicon] Upload succeeded but no media ID returned")
+
     # 8. Verify on front-end
     verified = False
     if not skip_verify:
@@ -521,6 +579,8 @@ def deploy(
         "theme": theme,
         "theme_type": theme_type,
         "snippet_id": snippet_id,
+        "favicon_media_id": favicon_media_id,
+        "favicon_url": favicon_url,
         "css_length": len(css_content),
         "verified": verified,
         "user": user.get("name", ""),
@@ -565,6 +625,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Do not remove old helper plugins",
     )
+    parser.add_argument(
+        "--favicon-file",
+        default="",
+        help="Optional local favicon file (.png/.ico/.jpg) to upload and set as WordPress Site Icon",
+    )
     return parser.parse_args()
 
 
@@ -577,6 +642,7 @@ def main() -> None:
         env_file=args.env_file or None,
         skip_verify=args.skip_verify,
         cleanup=not args.no_cleanup,
+        favicon_file=args.favicon_file or None,
     )
     print()
     print(json.dumps(result, indent=2, ensure_ascii=False))

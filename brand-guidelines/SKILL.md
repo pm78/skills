@@ -74,6 +74,7 @@ Application rules:
 - Use the top 2-4 colors in `colors` as primary/secondary/accent tokens.
 - Use the top heading/body fonts from `fonts` and include safe fallbacks.
 - Use the first valid logo candidate from `logos` unless the user overrides it.
+- If present, use `css_style` for CSS/theme-level alignment and `illustration_style` for image prompt guidance.
 - Preserve hierarchy and contrast for readability and accessibility.
 - If `guidelines` or `policies` links are present, check them before finalizing external-facing output.
 

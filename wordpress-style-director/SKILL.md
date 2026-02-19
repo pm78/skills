@@ -54,6 +54,8 @@ python3 scripts/generate_wp_style_pack.py \
   --brief "Premium editorial dark theme for AI and longevity content" \
   --site-name "Timeless Wisdom" \
   --wp-url "https://www.thrivethroughtime.com" \
+  --footer-credit-text "© 2026 | Proudly Powered by Thrivethroughtime" \
+  --favicon-file "/path/to/favicon.png" \
   --deploy
 ```
 
@@ -96,7 +98,8 @@ python3 scripts/generate_wp_style_pack.py \
 python3 scripts/deploy_to_wordpress.py \
   --css-file "output/wordpress-style-director/my-run/additional-css-combined.css" \
   --wp-url "https://mysite.com" \
-  --site-name "My Site"
+  --site-name "My Site" \
+  --favicon-file "/path/to/favicon.png"
 ```
 
 ### Dry-run summary only
@@ -124,6 +127,8 @@ python3 scripts/generate_wp_style_pack.py \
 | `--font-body` | Override body font family |
 | `--run-name` | Fixed output folder name |
 | `--skip-verify` | Skip front-end verification after deploy |
+| `--footer-credit-text` | Inject a custom footer credit line in `.site-info` |
+| `--favicon-file` | Upload file and set as WordPress Site Icon (favicon) |
 | `--dry-run` | Print summary only, no files written |
 
 ## Outputs

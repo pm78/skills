@@ -17,21 +17,26 @@ Set these variables before running the script:
 - `MY_ARTICLES_DB_ID` (optional; defaults to your current DB ID)
 - `OPENAI_API_KEY` (needed when an article has no image and the script must generate one)
 - Site credentials used by `config/wp_sites.json`:
-  - `WP_USERNAME`
-  - `WP_APP_PASSWORD`
-  - `WP_LNC_USERNAME`
+  - `WP_TTT_APP_USERNAME`
+  - `WP_TTT_APP_PASSWORD`
+  - `WP_LNC_APP_USERNAME`
   - `WP_LNC_APP_PASSWORD`
 
 Optional:
 
 - `PUBLICATIONS_DB_ID` (if set, create one publication log row per publish)
 - `WP_SITE_KEY` (target site key from config, for example `thrivethroughtime` or `lesnewsducoach`)
-- `DEFAULT_SITE_KEY` (fallback site key; default `thrivethroughtime`)
+- `DEFAULT_SITE_KEY` (fallback site key; default `lesnewsducoach`)
 - `WP_SITES_CONFIG` (path override; default `config/wp_sites.json`)
+- `WP_BRAND_PROFILE` (optional brand profile override for illustration style)
+- `OPENAI_IMAGE_MODEL` (optional; default `gpt-image-1`)
+- `OPENAI_IMAGE_SIZE` (optional; default `1536x1024`)
+- `OPENAI_IMAGE_QUALITY` (optional; default `high`)
+- `BRAND_PROFILES_DIR` (path to brand profile presets; default points to `brand-guidelines/assets/profiles`)
 - Legacy single-site fallback vars remain supported:
   - `WORDPRESS_SITE` or `WP_URL`
-  - `WORDPRESS_USERNAME` or `WP_APP_USERNAME`
-  - `WORDPRESS_APP_PASSWORD`
+  - `WP_USERNAME`, `WORDPRESS_USERNAME`, or `WP_APP_USERNAME`
+  - `WP_APP_PASSWORD` or `WORDPRESS_APP_PASSWORD`
 
 ## Multi-Site Config
 
@@ -47,6 +52,9 @@ Expected shape:
     "wp_url": "https://example.com",
     "username_env": "WP_SITE_USERNAME",
     "password_env": "WP_SITE_APP_PASSWORD",
+    "brand_profile": "brand-profile-id",
+    "default_category": "optional category slug|name|id fallback",
+    "category_aliases": { "optional notion tag/keyword": "wordpress-category-slug" },
     "platform_name": "WordPress-SiteName",
     "notion_site_label": "site_label",
     "aliases": ["optional alias", "optional domain"]
@@ -109,29 +117,48 @@ Skip automatic illustration logic:
 python3 scripts/publish_latest_draft.py --skip-illustration
 ```
 
+Override brand profile for image styling:
+
+```bash
+python3 scripts/publish_latest_draft.py --site lesnewsducoach --brand-profile lesnewsducoach
+```
+
 ## Behavior
 
 - Auto-detect Notion properties for title, status, content, slug, and summary.
+- Auto-detect optional Notion category/tag properties (`Category/Categories/Catégorie/Catégories`, `Tags/Keywords/...`) to drive taxonomy mapping.
 - Auto-detect optional Notion target-site property (`Target Site`, `Publish Site`, `Site`, `Website`, etc.).
 - Resolve target site in this order:
   - `--site` / `WP_SITE_KEY`
   - article row target-site value
   - `--default-site-key` / `DEFAULT_SITE_KEY`
+- Resolve brand style profile for images in this order:
+  - `--brand-profile` / `WP_BRAND_PROFILE`
+  - `brand_profile` (or `brand_id`) from selected site config
+  - selected site key
+- Default image style is now inferred from the selected brand profile rendering cues (for example photorealistic vs illustration), instead of always forcing illustration style.
 - Prefer content from a `Content` rich text field; fall back to Notion page blocks if empty.
 - Convert markdown content to clean HTML with headings, bold/italic, quotes, lists, code, and paragraphs.
 - Convert bare URLs and markdown links into clickable anchors.
 - Convert inline citations like `[1]` into links to source entries.
 - Render a structured clickable `Sources` section (`<ol>` with anchor targets).
 - Publish via `POST /wp-json/wp/v2/posts` with status `publish`.
+- Resolve WordPress categories before publish:
+  - Priority 1: explicit Notion categories (if present)
+  - Priority 2: Notion tags/keywords mapped to available WordPress categories
+  - Priority 3: content inference (title/excerpt/body vs available category names/slugs)
+  - Priority 4: `default_category` (site config) or site uncategorized fallback
+- Publish with `categories` set in WordPress payload when at least one category is resolved.
 - Ensure at least one illustration:
   - If content already contains an image, keep it.
   - Else if an `Illustration URL`/`Featured Image URL`-style property exists in Notion and has a URL, reuse it.
-  - Else generate an illustration with OpenAI Images, upload to WordPress media, and set it as `featured_media` (fallback: prepend inline when media ID is unavailable).
+  - Else generate an illustration with OpenAI Images, aligned to brand `css_style` + `illustration_style` when available, upload to WordPress media, and set it as `featured_media` (fallback: prepend inline when media ID is unavailable).
 - Update Notion status after publish.
 - If a `Required Platforms`-style property exists (`Required Platforms`, `Target Platforms`, `Publish Targets`, `Target Channels`, `Publish On`, `Channels`), status is resolved automatically:
   - `published` when all required platforms are present in published platforms
   - `partially_published` otherwise
 - Also update `Publish Date` and URL property (`Published URL`, `WordPress URL`, `Post URL`, or `URL`) if present.
+- Write resolved categories back to Notion when a category-like property exists.
 - If a `Published Platforms`-style property exists (`Published Platforms`, `Published On`, `Platforms Published`, `Published To`, `Live On`), append this run's platform value.
 - Write generated/reused illustration URL back into a Notion image URL property when available.
 - If `PUBLICATIONS_DB_ID` is configured, create a publication row and map best-effort fields:

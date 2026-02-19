@@ -55,7 +55,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--openai-api-key", default=os.getenv("OPENAI_API_KEY", ""))
     p.add_argument("--openai-model", default=os.getenv("OPENAI_MODEL", "gpt-5.1-mini"))
     p.add_argument("--tavily-api-key", default=os.getenv("TAVILY_API_KEY", ""))
-    p.add_argument("--newsapi-key", default=os.getenv("NEWSAPI_KEY", ""))
+    p.add_argument("--newsapi-key", default=os.getenv("NEWSAPI_API_KEY", os.getenv("NEWSAPI_KEY", "")))
     p.add_argument("--youtube-api-key", default=os.getenv("YOUTUBE_API_KEY", ""))
     p.add_argument("--nitter-base-url", default=os.getenv("NITTER_BASE_URL", ""))
     p.add_argument("--topics-file", default="references/default-topics.json")

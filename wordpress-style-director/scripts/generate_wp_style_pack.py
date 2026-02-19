@@ -100,6 +100,16 @@ def parse_args() -> argparse.Namespace:
                         help="Path to .env file with WP_APP_USERNAME and WP_APP_PASSWORD")
     parser.add_argument("--skip-verify", action="store_true",
                         help="Skip front-end verification after deployment")
+    parser.add_argument(
+        "--footer-credit-text",
+        default="",
+        help="Optional footer credit line injected in .site-info (for example: © 2026 | Proudly Powered by Thrivethroughtime)",
+    )
+    parser.add_argument(
+        "--favicon-file",
+        default="",
+        help="Optional local favicon file (.png/.ico/.jpg) to upload and set as WordPress Site Icon during deploy",
+    )
     return parser.parse_args()
 
 
@@ -846,6 +856,58 @@ body.dark,
 """
 
 
+def css_string_literal(value: str) -> str:
+    value = (value or "").replace("\\", "\\\\").replace('"', '\\"')
+    return value
+
+
+def should_apply_ttt_footer(site_name: str, wp_url: str, site_url: str) -> bool:
+    haystack = " ".join([site_name or "", wp_url or "", site_url or ""]).lower()
+    return ("thrivethroughtime" in haystack) or ("timeless wisdom" in haystack)
+
+
+def build_footer_credit_css(footer_text: str) -> str:
+    escaped = css_string_literal(footer_text.strip())
+    if not escaped:
+        return ""
+    return f"""
+/* =========================================================
+   HOTFIX: Footer Credits Text
+   ========================================================= */
+footer#colophon .site-info,
+.site-footer .site-info {{
+  text-align: center !important;
+  font-size: 0 !important;
+  line-height: 1.5 !important;
+  padding: 0.4rem 1rem !important;
+}}
+
+footer#colophon .site-info *,
+.site-footer .site-info * {{
+  display: none !important;
+}}
+
+footer#colophon .site-info::before,
+.site-footer .site-info::before {{
+  content: "{escaped}";
+  display: inline-block;
+  font-family: var(--wsd-font-body, "Source Sans 3", sans-serif);
+  font-size: clamp(1.15rem, 1.55vw, 1.45rem) !important;
+  font-weight: 700 !important;
+  line-height: 1.65 !important;
+  color: var(--wsd-bg-alt, #FFFFFF) !important;
+  letter-spacing: 0.025em !important;
+}}
+
+@media (max-width: 600px) {{
+  footer#colophon .site-info::before,
+  .site-footer .site-info::before {{
+    font-size: 1.05rem !important;
+  }}
+}}
+"""
+
+
 def choose_mode_inputs(args: argparse.Namespace) -> Tuple[List[str], collections.Counter, str, str, Dict[str, Any]]:
     if args.mode == "style-reference":
         site_url = (args.site_url or "").strip()
@@ -921,6 +983,16 @@ def main() -> None:
     dark_mode_css = build_dark_mode_neutralization_css()
     combined_css = tokens_css + "\n" + dark_mode_css + "\n" + overrides_css
 
+    footer_credit_text = (args.footer_credit_text or "").strip()
+    if not footer_credit_text and should_apply_ttt_footer(
+        args.site_name, args.wp_url, args.site_url
+    ):
+        footer_credit_text = (
+            f"© {dt.datetime.now().year} | Proudly Powered by Thrivethroughtime"
+        )
+    if footer_credit_text:
+        combined_css += "\n" + build_footer_credit_css(footer_credit_text)
+
     summary = {
         "mode": args.mode,
         "site_name": args.site_name,
@@ -941,6 +1013,7 @@ def main() -> None:
         "guardrails": {
             "style_reference_policy": "Inspired-by styling only; avoid pixel-perfect cloning or trademarked branding reuse.",
         },
+        "footer_credit_text": footer_credit_text,
         "created_at": dt.datetime.now().isoformat(timespec="seconds"),
     }
 
@@ -978,6 +1051,7 @@ def main() -> None:
             site_name=args.site_name,
             env_file=args.env_file or None,
             skip_verify=args.skip_verify,
+            favicon_file=args.favicon_file or None,
         )
         # Append deployment info to summary
         summary["deployment"] = result

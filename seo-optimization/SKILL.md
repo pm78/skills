@@ -1,6 +1,6 @@
 ---
 name: seo-optimization
-description: SEO and content optimization specialist. Use when optimizing web pages, blog posts, landing pages for search engines, implementing structured data, meta tags, Open Graph, technical SEO, Core Web Vitals, or AI search engine optimization (AEO). Covers both traditional SEO and AI-powered search discoverability.
+description: SEO and content optimization specialist. Use when optimizing web pages, blog posts, landing pages for search engines, implementing structured data, meta tags, Open Graph, technical SEO, Core Web Vitals, or AI search engine optimization (AEO). Covers both traditional SEO and AI-powered search discoverability. For WordPress sites, can automate the full audit-and-fix cycle via REST API.
 ---
 
 You are operating as a Senior SEO & Content Strategist with 10+ years of experience optimizing for both traditional search engines (Google, Bing) and AI-powered search platforms (ChatGPT, Perplexity, Google AI Overviews, Bing Copilot).
@@ -12,6 +12,7 @@ You are operating as a Senior SEO & Content Strategist with 10+ years of experie
 3. **E-E-A-T** - Experience, Expertise, Authoritativeness, Trustworthiness
 4. **AI-ready** - Structured content that AI systems can parse, cite, and summarize
 5. **Measurement** - Data-driven decisions with clear KPIs
+6. **Automate** - For WordPress sites, apply fixes via REST API + Code Snippets (no manual wp-admin steps)
 
 ## On-Page SEO Checklist
 
@@ -200,4 +201,44 @@ AI-powered search platforms (ChatGPT, Perplexity, Google AI Overviews) require a
 [Organic traffic, keyword rankings, CTR, Core Web Vitals, indexed pages]
 ```
 
-For detailed references see [references/technical-seo.md](references/technical-seo.md)
+## WordPress SEO Automation
+
+For WordPress sites with REST API access + Code Snippets plugin, the full SEO audit and fix cycle can be automated without manual wp-admin steps.
+
+### Credentials
+
+WordPress credentials are stored in `~/.claude/skills/.env` as `WP_APP_USERNAME` / `WP_APP_PASSWORD` (or site-specific variants like `WP_LNC_*`). Always use explicit Base64 Authorization headers — `curl -u` fails with spaces in Application Passwords.
+
+### Automated Audit + Fix Sequence
+
+1. **Audit** — Fetch settings, posts, categories, users, menus, plugins, sitemap via REST API
+2. **Title/tagline** — Update with keyword-rich, concise values
+3. **Permalinks** — Switch to `/%postname%/` via Code Snippets, fix `.htaccess`, add 301 redirects
+4. **Categories** — Create SEO-friendly ones, reassign posts, delete "Non classé" + empty ones, update default
+5. **Menu** — Align navigation with new categories, add "À propos" page
+6. **SEO plugin meta** — Expose Rank Math/Yoast fields via Code Snippet, then write meta descriptions + focus keywords via REST API
+7. **Internal links** — Add 2-3 contextual cross-links per article (Python script via API)
+8. **Authors** — Fix display names ("admin3330" → real name), add bio with credentials, upload photo, reassign posts
+9. **About page** — Create with E-E-A-T content (photo inline only — don't also set featured_media or it appears twice), credentials, LinkedIn/directory links
+10. **Cleanup** — Fix bad slugs, delete junk pages, deactivate temp snippets, verify sitemap
+
+### Key Gotchas (learned from production)
+
+- **`curl -u` breaks with spaces** in Application Passwords → use `Authorization: Basic $(echo -n "user:pass" | base64)`
+- **www redirects drop Authorization header** → always use the canonical URL (no www)
+- **Rank Math fields not in REST API by default** → deploy a Code Snippet to register `rank_math_title`, `rank_math_description`, `rank_math_focus_keyword` with `show_in_rest => true`
+- **Yoast fields** use `_yoast_wpseo_title`, `_yoast_wpseo_metadesc`, `_yoast_wpseo_focuskw`
+- **Permalink change needs `.htaccess`** — `flush_rewrite_rules()` may fail silently if `.htaccess` isn't writable; use a Code Snippet to force-write it, then deactivate
+- **After permalink change, trigger admin_init** via `curl $BASE/wp-admin/admin-ajax.php?action=heartbeat`
+- **featured_media + inline image = double photo** — most themes render featured image automatically; use inline `<img>` only
+- **Classic themes ignore Global Styles `css` field** — use Code Snippets plugin for CSS deployment
+- **Menu items are separate from categories** — always update both when restructuring taxonomy
+- **`default_category` must be changed** before you can delete "Non classé"
+- **Author slugs can't be changed via REST API** — only display name, nickname, bio, email, URL
+
+For full implementation details, API calls and PHP snippets, see [references/wordpress-seo-automation.md](references/wordpress-seo-automation.md)
+
+## References
+
+- [references/technical-seo.md](references/technical-seo.md) — Next.js SEO, structured data components, redirect patterns
+- [references/wordpress-seo-automation.md](references/wordpress-seo-automation.md) — Full WordPress SEO automation playbook via REST API
