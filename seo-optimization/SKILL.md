@@ -235,6 +235,17 @@ WordPress credentials are stored in `~/.claude/skills/.env` as `WP_APP_USERNAME`
 22. **Featured image performance pass** — Compress oversized featured images (prefer WebP/JPEG for photo-style assets), upload optimized replacements, and reassign each post’s `featured_media`
 23. **SERP metadata pass** — Normalize title/meta description lengths on home, categories, and all key posts (prioritize intent match + CTR clarity)
 24. **Post-change verification** — Validate live output (HTML tags, headers, sitemap, redirects, media bytes) before closing the task
+25. **Theme-safe typography changes** — If changing branding/header font sizes, run anti-clipping checks and patch `#masthead`/`.site-header` constraints (`max-height`, `height`, `overflow`, spacing) so text remains fully visible.
+26. **Post-publish indexation automation** — After publish, automatically ping sitemap and submit URL inspection/index requests via Search Console API (with queue/retry + daily cron), so manual submission is optional.
+27. **Full SEO pack gate (content + UX + perf)** — Before close, enforce one combined pass: template-level title/meta strategy, featured image CTR quality check, image compression, and speed verification (CWV-oriented).
+28. **Multi-site brand profile enforcement** — For FR/EN or multi-brand setups (e.g., TTT vs LNC), apply the correct per-site profile (tone, typography, featured-image style, footer/legal style) and block cross-brand bleed.
+29. **Snippet anti-conflict strategy** — Prefer focused snippets by responsibility (e.g., dedicated footer legal snippet) over editing a monolithic style pack unless a full-pack refactor is explicitly requested.
+30. **Typography checklist enforcement** — Validate baseline hierarchy explicitly: `body(LNC) < body(target) < body(TTT)`, `H2-H5 >= body`, side menus equal to body readability baseline.
+31. **Visual proof loop** — Capture before/after evidence (screenshots), force hard-refresh/cache-buster verification, then apply fine tuning (vertical centering, parasitic lines, final readability).
+32. **Snippet versioning + rollback** — Save pre-change snippet snapshot (timestamp + code copy + scope + priority) and keep a one-command rollback path for production safety.
+33. **Snippet naming and priority conventions** — Enforce predictable naming (`brand/feature/scope`) and stable priority bands to reduce snippet collisions.
+34. **Secrets hygiene** — Never expose credentials in logs, screenshots, or skill outputs; redact by default and keep secrets only in `.env`/secure stores.
+35. **Accessibility gate** — Validate minimum contrast, readable size/line-height, keyboard focus visibility, and mobile tap targets as part of SEO UX quality.
 
 ### Post-Change Verification (mandatory)
 
@@ -246,6 +257,56 @@ After any automated fix batch, always run these checks against the **live fronte
 4. **Sitemap/redirect integrity** — Confirm expected sitemap providers and 301 behavior (e.g., author archives).
 5. **Media output** — Confirm rendered `og:image` and listing images now point to optimized assets; verify byte-size reduction via `HEAD`.
 6. **Snippet runtime reality** — Do not trust snippet save status alone (`code_error: null` is insufficient). Validate rendered output from live pages.
+7. **Header/hero clipping check** — If typography changed, validate live source and rendered layout for title/subtitle clipping on desktop and mobile (`max-height`, `overflow`, `line-height`, margins).
+8. **Site isolation check** — In multi-site work (e.g., TTT + LNC), confirm the change only touched the intended domain/site credentials and did not regress the other site.
+9. **Full SEO pack check** — Confirm title/meta strategy, featured image CTR quality, compression results, and speed checks were all completed together.
+10. **Visual proof artifacts** — Produce before/after screenshots, include cache-buster (`?v=timestamp`) validation, and confirm hard-refresh parity.
+11. **Snippet health** — Confirm snippet is active, `code_error` is null, and HTML marker(s) from injected code are present on target templates.
+12. **Accessibility baseline** — Confirm contrast and text legibility after typography/design changes.
+
+### User Communication Mode (mandatory)
+
+- If the user signals confusion (e.g., "I don't understand", "it's Chinese"), switch immediately to explicit step-by-step guidance with exact menu labels and click path.
+- Match the user's language for instructions (French user => French UI guidance).
+- For repeated manual actions (e.g., post publish indexing), proactively propose automation first.
+- Keep terminal-style instructions concrete: exact file path, exact command, exact expected output.
+
+### Multi-Site Brand Profiles (mandatory)
+
+- Maintain explicit per-site profile files/blocks (at minimum): language, tone, typography scale, image style, footer/legal formatting.
+- Example profile split:
+  - `TTT`: EN, evidence-based longevity tone, larger editorial heading scale.
+  - `LNC`: FR, market-watch/pro coaching tone, slightly tighter body scale.
+- Never reuse generated media/style packs across sites without profile remapping.
+
+### Snippet Change Strategy (anti-conflicts)
+
+- Prefer creating/updating a dedicated snippet per feature (`footer-legal`, `header-typography`, `seo-meta`) instead of touching large shared snippets.
+- Before change: record snippet id/name/priority/active status.
+- After change: verify three things in this order:
+  - `code_error` from API
+  - `active` state
+  - marker presence in live HTML (`<style id="...">`, comment marker, or JSON-LD id)
+
+### Visual Proof Loop (mandatory)
+
+- Step 1: capture baseline screenshot (desktop + mobile).
+- Step 2: deploy change.
+- Step 3: hard refresh and cache-buster check (`?v=<timestamp>`).
+- Step 4: capture after screenshot.
+- Step 5: perform micro-adjustments (vertical centering, separator artifacts, readability) and re-capture.
+
+### Snippet Versioning & Rollback (mandatory)
+
+- Save snapshot before each snippet change: timestamp, endpoint, snippet payload.
+- Keep rollback payload ready in the same run folder.
+- On regression report, rollback first, then debug in a separate iteration.
+
+### Security & Secret Hygiene (mandatory)
+
+- Never print or commit raw API keys, app passwords, or bearer tokens.
+- Redact credentials in logs and examples.
+- If accidental exposure occurs, rotate credentials immediately and document rotation timestamp.
 
 ### Key Gotchas (learned from production)
 
@@ -281,6 +342,15 @@ After any automated fix batch, always run these checks against the **live fronte
 - **Browser cache headers via PHP snippet** — When `.htaccess` is not writable, use a Code Snippet hooking `send_headers` to set `Cache-Control: public, max-age=600, s-maxage=3600, stale-while-revalidate=86400` for non-logged-in users. Remove `Pragma` and `Expires` headers.
 - **Homepage OG image defaults to favicon** — WP falls back to the site icon (often 512px) as OG image. Always generate and upload a proper 1200x630 social sharing image.
 - **Legacy theme H1 fixes must be scoped** — If you demote header `site-title` from `<h1>`, scope it to singular templates (`is_single() || is_page()`) unless archives are explicitly handled. A global demotion can leave category archives with zero H1.
+- **Header typography can be clipped even when font rules are correct** — Many themes pin `#masthead`/`.site-header` with fixed `height` + `max-height` + `overflow:hidden`. Any "2x font size" change must also patch container constraints.
+- **H1-to-P replacement scripts affect CSS targeting** — Some SEO fixes replace `h1.site-title` with `p.site-title`; include both selectors and reset default paragraph margins to avoid visual truncation.
+- **Escaped newline corruption in snippet payloads** — REST updates can inject literal `\\n` into CSS/PHP if string encoding is wrong. Validate live `<style id=\"...\">` output after deployment, not only API response.
+- **Do not trust one-site success in multi-site sessions** — A fix validated on site A may regress site B due to different theme constraints. Always run per-site verification independently.
+- **Typography hierarchy drift breaks readability** — Always enforce explicit body/menu/heading hierarchy targets after style updates.
+- **Monolithic snippet edits increase blast radius** — Prefer dedicated snippets; only edit large packs when unavoidable.
+- **No screenshot proof = incomplete validation** — Source-level checks are not enough for visual changes; keep before/after evidence.
+- **Rollback speed matters** — Snapshot first so production regressions can be reverted immediately.
+- **Secrets leak risk in collaborative terminals** — Never echo credentials in command history or outputs.
 - **Tags: nuclear option** — If all tags are AI-generated junk (English on a French site, all count=1, generic terms), delete them ALL — remove from posts first (`{"tags":[]}`), then delete each tag. Don't just clean zero-count ones.
 - **Image optimization fallback tooling** — If `imagemagick/cwebp/pngquant` are unavailable, use Python Pillow (`PIL`) to convert oversized featured PNGs to optimized JPEG/WebP, then upload through REST.
 - **Featured-media swap workflow** — For each post: download source image → optimize → upload new media → preserve/restore `alt_text` → set post `featured_media` to new media ID → verify rendered URLs (`-1038x576` derivatives included).

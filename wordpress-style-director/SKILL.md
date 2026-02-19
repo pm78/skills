@@ -38,6 +38,10 @@ Generate an Application Password in WordPress at: `Users > Your Profile > Applic
    - Install the **Code Snippets** plugin if not present.
    - Create or update a front-end PHP snippet that outputs the CSS.
    - Verify the CSS is rendering on the live front-end.
+   - Run hero/header anti-clipping checks when typography is enlarged.
+   - Confirm deployed snippet source is clean (no literal escaped `\n` artifacts in rendered `<style>`).
+   - Run a full visual QA loop (before/after screenshots + hard refresh + cache-buster check).
+   - Validate brand-profile isolation when multiple sites are in scope (TTT vs LNC, FR vs EN).
    - Clean up any temporary helper plugins.
 4. Review `summary.json` for deployment results.
 
@@ -154,6 +158,53 @@ WordPress Application Passwords work for REST API and XMLRPC only. They do NOT w
 
 ### Idempotent Updates
 Re-running `--deploy` updates the existing Code Snippets snippet rather than creating duplicates. The script searches by name prefix `"WSD Style Pack"`.
+
+### Header Typography Safety (required when increasing font size)
+- If title/subtitle is enlarged, validate container constraints first: `#masthead`/`.site-header` `height`, `max-height`, and `overflow`.
+- If clipping is observed, patch both typography and container rules in the same deployment.
+- Include both selector families in overrides when applicable: `h1.site-title` and `p.site-title`.
+- Reset heading/paragraph margins where needed to avoid cropped first/last lines.
+- Verify desktop + mobile breakpoints on live pages before closing.
+
+### Typography Hierarchy Checklist (required)
+- Enforce explicit readability hierarchy after deployment:
+  - `body(LNC) < body(target) < body(TTT)` when those profiles are used.
+  - `H2-H5 >= body`.
+  - Side/secondary menus should remain at body readability baseline.
+- If hierarchy fails, tune body first, then headings, then menus.
+
+### Multi-Site Deployment Safety
+- In sessions touching multiple WordPress sites, apply and verify changes one site at a time.
+- Use site-specific credentials (`WP_TTT_*`, `WP_LNC_*`, etc.) and explicitly log target domain.
+- After each deployment, check only the intended domain contains the updated `<style id="...">` block.
+
+### Brand Profile Isolation (required)
+- Keep separate profiles per site/language:
+  - Typography scale
+  - Image treatment direction
+  - Tone/style intent
+  - Footer/legal presentation
+- Never copy a generated pack from one brand/site to another without deliberate remapping.
+
+### Snippet Strategy (anti-conflicts)
+- Prefer dedicated snippets per concern (`header-typography`, `footer-legal`, `hero-adjustments`) instead of editing one large style pack.
+- Always verify, in order:
+  - API `code_error`
+  - snippet `active` status
+  - live HTML marker presence (`<style id="...">`)
+- Keep pre-change snapshot for fast rollback.
+
+### Visual Proof Loop (mandatory)
+- Capture before screenshot.
+- Deploy style change.
+- Hard refresh and open cache-buster URL (`?v=<timestamp>`).
+- Capture after screenshot.
+- Apply final micro-adjustments (vertical centering, stray lines, readability), then confirm final screenshot.
+
+### Security Hygiene
+- Never print raw credentials in logs/screenshots.
+- Use `.env`-based secrets only.
+- Redact all credential material in user-facing outputs.
 
 ## Guardrails
 
