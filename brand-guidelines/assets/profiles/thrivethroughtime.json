@@ -91,10 +91,10 @@
     ]
   },
   "illustration_style": {
-    "editorial_direction": "Wellness editorial, evidence-aware and optimistic, with natural lifestyle realism.",
-    "rendering": "Modern editorial illustration with subtle texture and soft edges; avoid glossy 3D rendering.",
-    "composition": "Human-centered scenes, clear focal subject, generous negative space for blog header crops.",
-    "mood": "Calm, trustworthy, practical, healthy-aging oriented.",
+    "editorial_direction": "Wellness and longevity editorial visuals with premium, credible, human-centered storytelling.",
+    "rendering": "Photorealistic editorial photography look with natural light, soft depth of field, realistic skin textures, and clean post-processing.",
+    "composition": "Single clear human subject or small realistic scene, crop-safe for WordPress featured cards, with balanced negative space and no visual clutter.",
+    "mood": "Calm, trustworthy, practical, hopeful, and healthy-aging oriented.",
     "color_palette": [
       "#FFC107",
       "#607D8B",
@@ -103,12 +103,16 @@
       "#F5F5F5"
     ],
     "motifs": [
-      "healthy routines",
-      "lifelong vitality",
-      "nature-informed wellness",
-      "balanced daily habits"
+      "mindful daily routines",
+      "healthy aging and resilience",
+      "nature-informed wellbeing",
+      "evidence-based lifestyle coaching"
     ],
     "avoid": [
+      "cartoon or flat illustration rendering",
+      "stylized vector characters",
+      "synthetic plastic skin tones",
+      "duplicated faces or lookalike subjects",
       "medical fear cues",
       "alarmist visual metaphors",
       "neon saturation",
@@ -120,6 +124,7 @@
   "style_notes": [
     "WordPress theme: Nisarg",
     "Use warm amber accents on neutral backgrounds for headers and calls to action.",
+    "Featured visuals must be photorealistic and editorial, not illustrated.",
     "Illustrations should support healthy-aging credibility rather than trend-driven visual effects."
   ]
 }

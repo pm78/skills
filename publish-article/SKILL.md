@@ -143,6 +143,7 @@ python3 scripts/publish_latest_draft.py --site lesnewsducoach --brand-profile le
 - Convert inline citations like `[1]` into links to source entries.
 - Render a structured clickable `Sources` section (`<ol>` with anchor targets).
 - Publish via `POST /wp-json/wp/v2/posts` with status `publish`.
+- Publish with comments/pings disabled by default (`comment_status=closed`, `ping_status=closed`).
 - Resolve WordPress categories before publish:
   - Priority 1: explicit Notion categories (if present)
   - Priority 2: Notion tags/keywords mapped to available WordPress categories
@@ -151,8 +152,21 @@ python3 scripts/publish_latest_draft.py --site lesnewsducoach --brand-profile le
 - Publish with `categories` set in WordPress payload when at least one category is resolved.
 - Ensure at least one illustration:
   - If content already contains an image, keep it.
-  - Else if an `Illustration URL`/`Featured Image URL`-style property exists in Notion and has a URL, reuse it.
-  - Else generate an illustration with OpenAI Images, aligned to brand `css_style` + `illustration_style` when available, upload to WordPress media, and set it as `featured_media` (fallback: prepend inline when media ID is unavailable).
+  - Else if an `Illustration URL`/`Featured Image URL`-style property exists in Notion and has a URL, download it, optimize/compress it when needed (Pillow fallback logic), upload to WordPress media, and set it as `featured_media` when possible.
+  - Else generate an illustration with OpenAI Images, optimize/compress image bytes before upload (especially oversized PNG outputs), upload to WordPress media, and set it as `featured_media` (fallback: prepend inline when media ID is unavailable).
+- Compute and write Rank Math SEO metadata on every publish:
+  - `rank_math_title` (length-normalized, CTR-safe)
+  - `rank_math_description` (target <= 158 chars after cleanup)
+  - `rank_math_focus_keyword` (category/tag/title-derived fallback)
+- Run post-publish frontend verification checks:
+  - single `<title>`
+  - single `<meta name="description">` and valid description length
+  - single canonical tag
+  - single `<h1>`
+  - comments/pings closed
+  - OG tag presence (`og:title`, `og:description`, `og:image`)
+- Enforce an SEO gate before Notion status update:
+  - If Rank Math metadata write fails or required verification checks fail, the script exits with an SEO gate error and does **not** mark the article as published in Notion.
 - Update Notion status after publish.
 - If a `Required Platforms`-style property exists (`Required Platforms`, `Target Platforms`, `Publish Targets`, `Target Channels`, `Publish On`, `Channels`), status is resolved automatically:
   - `published` when all required platforms are present in published platforms

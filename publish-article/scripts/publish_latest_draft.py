@@ -7,6 +7,7 @@ import argparse
 import base64
 import datetime as dt
 import html
+import io
 import json
 import mimetypes
 import os
@@ -17,6 +18,12 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+try:
+    from PIL import Image, ImageOps
+except Exception:
+    Image = None  # type: ignore[assignment]
+    ImageOps = None  # type: ignore[assignment]
 
 NOTION_API_BASE = "https://api.notion.com/v1"
 OPENAI_API_BASE = "https://api.openai.com/v1"
@@ -36,6 +43,9 @@ DEFAULT_UNCATEGORIZED_KEYS = {
     "sans-categorie",
     "no-category",
 }
+
+SEO_TITLE_MAX_LEN = 60
+SEO_DESC_MAX_LEN = 158
 
 
 def parse_args() -> argparse.Namespace:
@@ -1344,6 +1354,414 @@ def slugify(value: str) -> str:
     return cleaned[:80] or "article-illustration"
 
 
+def normalize_spaces(value: str) -> str:
+    return re.sub(r"\s+", " ", (value or "").strip())
+
+
+def html_to_plain_text(value: str) -> str:
+    text = re.sub(r"<[^>]+>", " ", value or "")
+    text = html.unescape(text)
+    return normalize_spaces(text)
+
+
+def truncate_with_ellipsis(value: str, max_len: int) -> str:
+    value = normalize_spaces(value)
+    if len(value) <= max_len:
+        return value
+    clipped = value[: max(0, max_len - 1)].rstrip(" ,;:-")
+    return clipped + "…"
+
+
+def build_seo_title(title: str, *, max_len: int = SEO_TITLE_MAX_LEN) -> str:
+    text = normalize_spaces(html.unescape(title))
+    if len(text) <= max_len:
+        return text
+
+    # Prefer a clean left segment before separators to preserve intent.
+    for sep in [" | ", " — ", " - ", ": ", ". "]:
+        if sep in text:
+            left = normalize_spaces(text.split(sep, 1)[0])
+            if 35 <= len(left) <= max_len:
+                return left
+
+    return truncate_with_ellipsis(text, max_len)
+
+
+def build_seo_description(
+    *,
+    excerpt: str,
+    content_html: str,
+    max_len: int = SEO_DESC_MAX_LEN,
+) -> str:
+    base = normalize_spaces(html.unescape(excerpt or ""))
+    if not base:
+        base = html_to_plain_text(content_html)
+    return truncate_with_ellipsis(base, max_len)
+
+
+def build_focus_keyword(
+    *,
+    title: str,
+    category_names: List[str],
+    notion_tags: List[str],
+) -> str:
+    preferred = unique_non_empty([*category_names, *notion_tags])
+    for candidate in preferred:
+        clean = normalize_spaces(html.unescape(candidate))
+        if 3 <= len(clean) <= 60:
+            return clean
+
+    title_words = re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ0-9]+", html.unescape(title or ""))
+    stopwords = {
+        "le",
+        "la",
+        "les",
+        "un",
+        "une",
+        "des",
+        "du",
+        "de",
+        "et",
+        "en",
+        "pour",
+        "sur",
+        "dans",
+        "au",
+        "aux",
+        "the",
+        "a",
+        "an",
+        "and",
+        "of",
+        "to",
+        "in",
+        "for",
+        "on",
+    }
+    kept = [word for word in title_words if word.lower() not in stopwords and len(word) >= 3]
+    if kept:
+        return " ".join(kept[:4])[:60]
+    return truncate_with_ellipsis(normalize_spaces(title), 60)
+
+
+def build_rank_math_meta_payload(
+    *,
+    title: str,
+    excerpt: str,
+    content_html: str,
+    category_names: List[str],
+    notion_tags: List[str],
+) -> Dict[str, str]:
+    return {
+        "rank_math_title": build_seo_title(title),
+        "rank_math_description": build_seo_description(excerpt=excerpt, content_html=content_html),
+        "rank_math_focus_keyword": build_focus_keyword(
+            title=title,
+            category_names=category_names,
+            notion_tags=notion_tags,
+        ),
+    }
+
+
+def detect_image_content_type(image_bytes: bytes, fallback: str = "image/png") -> str:
+    if image_bytes.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if image_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if image_bytes.startswith(b"RIFF") and image_bytes[8:12] == b"WEBP":
+        return "image/webp"
+    if image_bytes.startswith(b"GIF87a") or image_bytes.startswith(b"GIF89a"):
+        return "image/gif"
+    return fallback
+
+
+def optimize_featured_image_bytes(
+    image_bytes: bytes,
+    content_type: str,
+    *,
+    max_width: int = 1600,
+    max_bytes: int = 450_000,
+) -> Tuple[bytes, str, Dict[str, Any]]:
+    original_type = detect_image_content_type(image_bytes, fallback=content_type or "image/png")
+    report: Dict[str, Any] = {
+        "original_content_type": original_type,
+        "original_size_bytes": len(image_bytes),
+        "optimized": False,
+        "method": "none",
+    }
+
+    if not image_bytes:
+        report["reason"] = "empty_image_payload"
+        return image_bytes, original_type, report
+
+    if Image is None:
+        report["reason"] = "pillow_not_available"
+        return image_bytes, original_type, report
+
+    must_optimize = original_type == "image/png" or len(image_bytes) > max_bytes
+    if not must_optimize:
+        report["reason"] = "already_small"
+        return image_bytes, original_type, report
+
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+    except Exception as exc:
+        report["reason"] = f"pillow_open_failed:{exc}"
+        return image_bytes, original_type, report
+
+    try:
+        # Respect EXIF orientation when present.
+        if ImageOps is not None:
+            img = ImageOps.exif_transpose(img)
+    except Exception:
+        pass
+
+    original_w, original_h = img.size
+    report["original_width"] = int(original_w)
+    report["original_height"] = int(original_h)
+
+    if original_w > max_width:
+        ratio = max_width / float(original_w)
+        target_size = (max_width, max(1, int(round(original_h * ratio))))
+        resample = getattr(Image, "Resampling", Image).LANCZOS
+        img = img.resize(target_size, resample)
+        report["resized"] = True
+    else:
+        report["resized"] = False
+
+    # Convert to JPEG for predictable compression and broad WordPress compatibility.
+    if img.mode in ("RGBA", "LA") or (
+        img.mode == "P" and ("transparency" in (img.info or {}))
+    ):
+        bg = Image.new("RGB", img.size, (255, 255, 255))
+        alpha = img.convert("RGBA")
+        bg.paste(alpha, mask=alpha.split()[-1])
+        img = bg
+    else:
+        img = img.convert("RGB")
+
+    output = io.BytesIO()
+    try:
+        img.save(output, format="JPEG", quality=82, optimize=True, progressive=True)
+    except OSError:
+        output = io.BytesIO()
+        img.save(output, format="JPEG", quality=82)
+
+    optimized_bytes = output.getvalue()
+    optimized_size = len(optimized_bytes)
+    report["optimized_size_bytes"] = optimized_size
+    report["optimized_content_type"] = "image/jpeg"
+
+    if optimized_size >= int(len(image_bytes) * 0.95):
+        report["reason"] = "savings_too_small"
+        return image_bytes, original_type, report
+
+    report["optimized"] = True
+    report["method"] = "jpeg_reencode"
+    report["saved_bytes"] = len(image_bytes) - optimized_size
+    return optimized_bytes, "image/jpeg", report
+
+
+def image_filename_with_extension(base_name: str, content_type: str) -> str:
+    root = re.sub(r"\.[a-zA-Z0-9]{1,5}$", "", (base_name or "").strip()) or "image"
+    ext = guess_extension_from_mime(content_type)
+    return f"{root}{ext}"
+
+
+def download_image_bytes(image_url: str, *, timeout: int = 120) -> Tuple[bytes, str]:
+    req = urllib.request.Request(
+        image_url,
+        method="GET",
+        headers={"User-Agent": "publish-article/1.0"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        payload = resp.read()
+        mime = (resp.headers.get("Content-Type") or "").split(";")[0].strip()
+        return payload, detect_image_content_type(payload, fallback=mime or "image/png")
+
+
+def update_wordpress_rank_math_meta(
+    wordpress_site: str,
+    username: str,
+    app_password: str,
+    *,
+    post_id: int,
+    seo_meta: Dict[str, str],
+    dry_run: bool,
+) -> Dict[str, Any]:
+    endpoint = wordpress_site.rstrip("/") + f"/wp-json/wp/v2/posts/{post_id}"
+    payload = {"meta": seo_meta}
+
+    if dry_run:
+        return {"dry_run": True, "updated": False, "payload": payload}
+
+    headers = wordpress_headers(username, app_password)
+    body = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(endpoint, data=body, method="POST", headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            raw = resp.read().decode("utf-8")
+            data = json.loads(raw) if raw else {}
+            return {
+                "updated": True,
+                "post_id": data.get("id"),
+                "meta": data.get("meta"),
+            }
+    except urllib.error.HTTPError as exc:
+        detail = ""
+        try:
+            detail = exc.read().decode("utf-8")
+        except Exception:
+            detail = str(exc)
+        return {
+            "updated": False,
+            "error": f"HTTP {exc.code}",
+            "detail": detail[:700],
+            "hint": (
+                "Rank Math meta may not be exposed in REST API. "
+                "Register rank_math_* fields with show_in_rest=true."
+            ),
+        }
+
+
+def fetch_url_text(url: str, *, headers: Optional[Dict[str, str]] = None, timeout: int = 45) -> str:
+    req = urllib.request.Request(url, method="GET", headers=headers or {})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", errors="replace")
+
+
+def extract_meta_contents(html_text: str, *, key_attr: str, key_value: str) -> List[str]:
+    pattern_a = re.compile(
+        rf"<meta\b[^>]*\b{re.escape(key_attr)}=['\"]{re.escape(key_value)}['\"][^>]*\bcontent=['\"]([^'\"]*)['\"][^>]*>",
+        re.IGNORECASE,
+    )
+    pattern_b = re.compile(
+        rf"<meta\b[^>]*\bcontent=['\"]([^'\"]*)['\"][^>]*\b{re.escape(key_attr)}=['\"]{re.escape(key_value)}['\"][^>]*>",
+        re.IGNORECASE,
+    )
+    return [*pattern_a.findall(html_text), *pattern_b.findall(html_text)]
+
+
+def head_content_length(url: str, *, timeout: int = 30) -> Optional[int]:
+    req = urllib.request.Request(url, method="HEAD")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            value = (resp.headers.get("Content-Length") or "").strip()
+            return int(value) if value.isdigit() else None
+    except Exception:
+        return None
+
+
+def verify_published_post(
+    wordpress_site: str,
+    username: str,
+    app_password: str,
+    *,
+    post_id: Optional[int],
+    wp_link: str,
+    expected_seo_meta: Dict[str, str],
+    illustration_url: str,
+    dry_run: bool,
+) -> Dict[str, Any]:
+    if dry_run:
+        return {"dry_run": True, "skipped": True, "reason": "dry_run"}
+    if not post_id:
+        return {"skipped": True, "reason": "missing_post_id"}
+
+    endpoint = (
+        wordpress_site.rstrip("/")
+        + f"/wp-json/wp/v2/posts/{post_id}?context=edit&_fields=id,link,comment_status,ping_status,meta,rank_math_title,rank_math_description,rank_math_focus_keyword"
+    )
+
+    post_data: Dict[str, Any] = {}
+    try:
+        post_data = http_json("GET", endpoint, headers=wordpress_headers(username, app_password))
+    except SystemExit as exc:
+        return {"skipped": True, "reason": f"post_fetch_failed:{exc}"}
+
+    frontend_url = (wp_link or str(post_data.get("link") or "")).strip()
+    if not frontend_url:
+        return {"skipped": True, "reason": "missing_frontend_url"}
+
+    try:
+        html_text = fetch_url_text(frontend_url, timeout=60)
+    except Exception as exc:
+        return {"skipped": True, "reason": f"frontend_fetch_failed:{exc}"}
+
+    title_count = len(re.findall(r"<title\b", html_text, flags=re.IGNORECASE))
+    desc_values = extract_meta_contents(html_text, key_attr="name", key_value="description")
+    canonical_count = len(
+        re.findall(r"<link\b[^>]*\brel=['\"]canonical['\"][^>]*>", html_text, flags=re.IGNORECASE)
+    )
+    h1_count = len(re.findall(r"<h1\b", html_text, flags=re.IGNORECASE))
+    og_title_count = len(extract_meta_contents(html_text, key_attr="property", key_value="og:title"))
+    og_desc_count = len(
+        extract_meta_contents(html_text, key_attr="property", key_value="og:description")
+    )
+    og_image_values = extract_meta_contents(html_text, key_attr="property", key_value="og:image")
+
+    rendered_desc = html.unescape(desc_values[0]) if desc_values else ""
+    rendered_desc_len = len(normalize_spaces(rendered_desc))
+
+    meta_obj = post_data.get("meta") if isinstance(post_data.get("meta"), dict) else {}
+    observed = {}
+    for key in ("rank_math_title", "rank_math_description", "rank_math_focus_keyword"):
+        value = ""
+        if isinstance(meta_obj, dict) and isinstance(meta_obj.get(key), str):
+            value = meta_obj.get(key) or ""
+        elif isinstance(post_data.get(key), str):
+            value = str(post_data.get(key) or "")
+        observed[key] = value
+
+    checks = {
+        "title_tag_present_once": title_count == 1,
+        "meta_description_present_once": len(desc_values) == 1,
+        "meta_description_len_ok": bool(rendered_desc) and rendered_desc_len <= SEO_DESC_MAX_LEN,
+        "canonical_present_once": canonical_count == 1,
+        "og_title_present": og_title_count >= 1,
+        "og_description_present": og_desc_count >= 1,
+        "og_image_present": len(og_image_values) >= 1,
+        "single_h1": h1_count == 1,
+        "comments_closed": str(post_data.get("comment_status") or "") == "closed",
+        "pings_closed": str(post_data.get("ping_status") or "") == "closed",
+    }
+
+    mismatches: Dict[str, Dict[str, str]] = {}
+    for key, expected in expected_seo_meta.items():
+        actual = normalize_spaces(observed.get(key) or "")
+        if not actual:
+            continue
+        if normalize_spaces(expected) != actual:
+            mismatches[key] = {"expected": expected, "actual": actual}
+
+    media_bytes = head_content_length(illustration_url) if illustration_url else None
+    warnings: List[str] = []
+    if not any(observed.values()):
+        warnings.append(
+            "Rank Math meta fields are not readable from REST response. "
+            "Confirm fields are registered with show_in_rest."
+        )
+    if mismatches:
+        warnings.append("Some Rank Math values differ from computed payload.")
+    if rendered_desc and rendered_desc_len > SEO_DESC_MAX_LEN:
+        warnings.append(
+            f"Rendered meta description length is {rendered_desc_len}, above {SEO_DESC_MAX_LEN}."
+        )
+
+    return {
+        "post_id": post_id,
+        "frontend_url": frontend_url,
+        "checks": checks,
+        "rank_math_expected": expected_seo_meta,
+        "rank_math_observed": observed,
+        "rank_math_mismatches": mismatches,
+        "meta_description_rendered_length": rendered_desc_len,
+        "og_image_url": og_image_values[0] if og_image_values else "",
+        "illustration_bytes_head": media_bytes,
+        "warnings": warnings,
+    }
+
+
 def build_illustration_prompt(
     title: str,
     excerpt: str,
@@ -2105,17 +2523,58 @@ def main() -> None:
     resolved_category_names = unique_non_empty(
         [html.unescape(str((term or {}).get("name") or "").strip()) for term in resolved_category_terms]
     )
+    seo_meta_payload = build_rank_math_meta_payload(
+        title=title,
+        excerpt=excerpt,
+        content_html=content_html,
+        category_names=resolved_category_names,
+        notion_tags=notion_tags,
+    )
 
     content_has_image = has_inline_image(content_html)
     illustration_status = "already_present" if content_has_image else "none"
     illustration_url = ""
     illustration_media_id: Optional[int] = None
     prepend_illustration = False
+    image_optimization_report: Dict[str, Any] = {"optimized": False, "method": "none"}
+    illustration_warnings: List[str] = []
 
     if not args.skip_illustration and not content_has_image:
         if existing_illustration_url:
             illustration_url = existing_illustration_url
             illustration_status = "reused_existing_url"
+            if not args.dry_run:
+                try:
+                    remote_bytes, remote_mime = download_image_bytes(existing_illustration_url)
+                    optimized_bytes, optimized_mime, opt_report = optimize_featured_image_bytes(
+                        remote_bytes,
+                        remote_mime,
+                    )
+                    image_optimization_report = opt_report
+                    filename = image_filename_with_extension(
+                        f"{slugify(slug or title)}-featured",
+                        optimized_mime,
+                    )
+                    media = upload_media_to_wordpress(
+                        wordpress_site,
+                        wp_username,
+                        wp_app_password,
+                        filename=filename,
+                        image_bytes=optimized_bytes,
+                        content_type=optimized_mime,
+                        dry_run=False,
+                    )
+                    media_id = media.get("id")
+                    media_url = (media.get("source_url") or "").strip()
+                    if isinstance(media_id, int):
+                        illustration_media_id = media_id
+                        illustration_status = "reused_existing_url_optimized"
+                        if media_url:
+                            illustration_url = media_url
+                except SystemExit as exc:
+                    illustration_warnings.append(
+                        f"Existing illustration optimization/upload failed: {exc}"
+                    )
         else:
             prompt = build_illustration_prompt(
                 title=title,
@@ -2132,15 +2591,30 @@ def main() -> None:
                 quality=args.image_quality,
                 dry_run=args.dry_run,
             )
-            ext = guess_extension_from_mime(mime_type)
-            filename = f"{slugify(slug or title)}-illustration{ext}"
+            optimized_bytes = image_bytes
+            optimized_mime = mime_type
+            if image_bytes:
+                optimized_bytes, optimized_mime, image_optimization_report = optimize_featured_image_bytes(
+                    image_bytes,
+                    mime_type,
+                )
+            else:
+                image_optimization_report = {
+                    "optimized": False,
+                    "method": "none",
+                    "reason": "dry_run_no_image_bytes",
+                }
+            filename = image_filename_with_extension(
+                f"{slugify(slug or title)}-illustration",
+                optimized_mime,
+            )
             media = upload_media_to_wordpress(
                 wordpress_site,
                 wp_username,
                 wp_app_password,
                 filename=filename,
-                image_bytes=image_bytes,
-                content_type=mime_type,
+                image_bytes=optimized_bytes,
+                content_type=optimized_mime,
                 dry_run=args.dry_run,
             )
             illustration_url = (media.get("source_url") or "").strip()
@@ -2161,6 +2635,8 @@ def main() -> None:
         "title": title,
         "content": content_html,
         "status": "publish",
+        "comment_status": "closed",
+        "ping_status": "closed",
     }
     if illustration_media_id:
         wp_payload["featured_media"] = illustration_media_id
@@ -2178,7 +2654,53 @@ def main() -> None:
         wp_payload,
         dry_run=args.dry_run,
     )
+    wp_post_id = wp_response.get("id") if isinstance(wp_response.get("id"), int) else None
     wp_link = (wp_response.get("link") or "").strip()
+    seo_meta_update = {"skipped": True, "reason": "missing_post_id"}
+    if wp_post_id is not None:
+        seo_meta_update = update_wordpress_rank_math_meta(
+            wordpress_site,
+            wp_username,
+            wp_app_password,
+            post_id=wp_post_id,
+            seo_meta=seo_meta_payload,
+            dry_run=args.dry_run,
+        )
+    verification_report = verify_published_post(
+        wordpress_site,
+        wp_username,
+        wp_app_password,
+        post_id=wp_post_id,
+        wp_link=wp_link,
+        expected_seo_meta=seo_meta_payload,
+        illustration_url=illustration_url,
+        dry_run=args.dry_run,
+    )
+    if not args.dry_run:
+        seo_gate_errors: List[str] = []
+        if not seo_meta_update.get("updated"):
+            seo_gate_errors.append(
+                "Rank Math meta update failed (rank_math_title/description/focus_keyword)"
+            )
+        checks = verification_report.get("checks") if isinstance(verification_report, dict) else {}
+        required_checks = [
+            "title_tag_present_once",
+            "meta_description_present_once",
+            "meta_description_len_ok",
+            "canonical_present_once",
+            "single_h1",
+            "comments_closed",
+            "pings_closed",
+        ]
+        for key in required_checks:
+            if isinstance(checks, dict) and checks.get(key) is False:
+                seo_gate_errors.append(f"verification_failed:{key}")
+        if seo_gate_errors:
+            raise SystemExit(
+                "SEO gate failed after WordPress publish. "
+                f"Post ID: {wp_post_id}, URL: {wp_link or '(none)'}. "
+                + " | ".join(seo_gate_errors)
+            )
 
     update_response = update_notion_page_after_publish(
         notion_token,
@@ -2210,7 +2732,7 @@ def main() -> None:
         article_page_id=page_id,
         article_title=title,
         site_label=site_label,
-        wp_post_id=wp_response.get("id"),
+        wp_post_id=wp_post_id,
         wp_link=wp_link,
         illustration_url=illustration_url,
         dry_run=args.dry_run,
@@ -2227,7 +2749,7 @@ def main() -> None:
             (selected_brand_profile or {}).get("brand_name") if selected_brand_profile else None
         ),
         "wordpress_site": wordpress_site,
-        "wordpress_post_id": wp_response.get("id"),
+        "wordpress_post_id": wp_post_id,
         "wordpress_link": wp_link,
         "notion_status_set_to": resolved_status_after_publish,
         "platform_name": platform_name,
@@ -2251,11 +2773,16 @@ def main() -> None:
         "illustration_status": illustration_status,
         "illustration_url": illustration_url,
         "illustration_media_id": illustration_media_id,
+        "image_optimization": image_optimization_report,
+        "illustration_warnings": illustration_warnings,
         "illustration_placement": (
             "featured_media"
             if illustration_media_id
             else ("inline_prepended" if prepend_illustration else "unchanged")
         ),
+        "seo_meta_payload": seo_meta_payload,
+        "seo_meta_update": seo_meta_update,
+        "post_publish_verification": verification_report,
         "publication_log": publication_log_response,
     }
 
@@ -2270,7 +2797,7 @@ def main() -> None:
     if selected_brand_profile_id:
         print(f"Brand profile: {selected_brand_profile_id}")
     print(f"Target WordPress site: {wordpress_site}")
-    print(f"WordPress post ID: {wp_response.get('id')}")
+    print(f"WordPress post ID: {wp_post_id}")
     print(f"WordPress link: {wp_link or '(none)'}")
     if resolved_category_names:
         print(
@@ -2283,6 +2810,31 @@ def main() -> None:
     print(f"Illustration: {illustration_status}")
     if illustration_url:
         print(f"Illustration URL: {illustration_url}")
+    if image_optimization_report.get("optimized"):
+        print(
+            "Image optimization: "
+            + f"{image_optimization_report.get('original_size_bytes')} -> "
+            + f"{image_optimization_report.get('optimized_size_bytes')} bytes"
+        )
+    if illustration_warnings:
+        print("Illustration warnings: " + " | ".join(illustration_warnings))
+    print("SEO meta title: " + seo_meta_payload.get("rank_math_title", ""))
+    print("SEO meta description: " + seo_meta_payload.get("rank_math_description", ""))
+    print("SEO focus keyword: " + seo_meta_payload.get("rank_math_focus_keyword", ""))
+    if seo_meta_update.get("updated"):
+        print("SEO meta update: applied")
+    else:
+        print(
+            "SEO meta update: "
+            + str(seo_meta_update.get("reason") or seo_meta_update.get("error") or "not applied")
+        )
+    checks = verification_report.get("checks") if isinstance(verification_report, dict) else None
+    if isinstance(checks, dict):
+        passed = [name for name, ok in checks.items() if ok]
+        failed = [name for name, ok in checks.items() if not ok]
+        print(f"Post verification checks passed: {len(passed)}")
+        if failed:
+            print("Post verification failed checks: " + ", ".join(failed))
     print(f"Notion status updated to: {resolved_status_after_publish}")
     if required_platforms:
         print(f"Required platforms: {', '.join(sorted(required_platforms))}")

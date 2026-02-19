@@ -211,7 +211,7 @@ WordPress credentials are stored in `~/.claude/skills/.env` as `WP_APP_USERNAME`
 
 ### Automated Audit + Fix Sequence
 
-1. **Audit** — Fetch settings, posts, categories, users, menus, plugins, sitemap via REST API
+1. **Audit** — Fetch settings, posts, categories, tags, users, menus, API root (namespaces), pages, sitemap via REST API. Also check: duplicate canonical/robots tag counts on article pages, internal link count per article, `llms.txt` (200 vs 404), cache headers (`curl -sI | grep cache`), OG image dimensions on homepage, `comment_status` on posts.
 2. **Title/tagline** — Update with keyword-rich, concise values
 3. **Permalinks** — Switch to `/%postname%/` via Code Snippets, fix `.htaccess`, add 301 redirects
 4. **Categories** — Create SEO-friendly ones, reassign posts, delete "Non classé" + empty ones, update default
@@ -220,7 +220,32 @@ WordPress credentials are stored in `~/.claude/skills/.env` as `WP_APP_USERNAME`
 7. **Internal links** — Add 2-3 contextual cross-links per article (Python script via API)
 8. **Authors** — Fix display names ("admin3330" → real name), add bio with credentials, upload photo, reassign posts
 9. **About page** — Create with E-E-A-T content (photo inline only — don't also set featured_media or it appears twice), credentials, LinkedIn/directory links
-10. **Cleanup** — Fix bad slugs, delete junk pages, deactivate temp snippets, verify sitemap
+10. **Duplicate detection** — Compare post titles for near-duplicates (keyword cannibalization). Merge content into the stronger post, set weaker to draft, add 301 redirects via Code Snippet using `init` hook (fires before WP's old-slug redirect)
+11. **Tag taxonomy** — Create 20-30 meaningful tags based on topic clusters, assign 3-5 per post programmatically. Better than zero tags or AI-generated junk tags.
+12. **Featured image generation** — For posts missing images, batch-generate editorial images via OpenAI `gpt-image-1` API (b64_json output), upload via WP media REST API (multipart form: `-F "file=@path;type=image/jpeg;filename=fn"`), set as `featured_media`
+13. **Static homepage** — Create a curated landing page with category links and CTAs, set via `show_on_front=page`, `page_on_front=ID`, `page_for_posts=ID` (separate blog page)
+14. **Auto TOC** — Deploy a `the_content` filter snippet that extracts H2/H3 headings, generates anchor IDs, and prepends a `<details>` Table of Contents
+15. **FAQ Schema** — Deploy a `wp_footer` snippet that finds question-style headings (ending with `?`) in raw post content, extracts answer text, and injects FAQPage JSON-LD (minimum 2 questions, max 5)
+16. **Cleanup** — Fix bad slugs, delete junk pages, deactivate temp snippets, verify sitemap
+17. **Close comments** — Set `default_comment_status` and `default_ping_status` to `closed` via settings API, then close on all existing posts
+18. **Cache headers** — Deploy a `send_headers` snippet for browser caching (static assets + HTML pages)
+19. **llms.txt** — Deploy via `parse_request` hook Code Snippet for AI crawler discoverability
+20. **OG social image** — Generate 1200x630 image, upload to media library, reference in SEO meta snippet for homepage/category fallback
+21. **BreadcrumbList JSON-LD** — Add to the SEO meta snippet for articles (Accueil > Category > Article) and pages
+22. **Featured image performance pass** — Compress oversized featured images (prefer WebP/JPEG for photo-style assets), upload optimized replacements, and reassign each post’s `featured_media`
+23. **SERP metadata pass** — Normalize title/meta description lengths on home, categories, and all key posts (prioritize intent match + CTR clarity)
+24. **Post-change verification** — Validate live output (HTML tags, headers, sitemap, redirects, media bytes) before closing the task
+
+### Post-Change Verification (mandatory)
+
+After any automated fix batch, always run these checks against the **live frontend**:
+
+1. **HTML tags** — Confirm `<title>`, `<meta name="description">`, canonical, OG/Twitter tags, and JSON-LD are present and not duplicated.
+2. **Headers** — Confirm public pages do not leak unwanted `Set-Cookie` / `Pragma` / `Expires`, and `Cache-Control` is correct.
+3. **H1 integrity** — Confirm exactly one `<h1>` per target template (posts/pages/categories as intended).
+4. **Sitemap/redirect integrity** — Confirm expected sitemap providers and 301 behavior (e.g., author archives).
+5. **Media output** — Confirm rendered `og:image` and listing images now point to optimized assets; verify byte-size reduction via `HEAD`.
+6. **Snippet runtime reality** — Do not trust snippet save status alone (`code_error: null` is insufficient). Validate rendered output from live pages.
 
 ### Key Gotchas (learned from production)
 
@@ -235,6 +260,33 @@ WordPress credentials are stored in `~/.claude/skills/.env` as `WP_APP_USERNAME`
 - **Menu items are separate from categories** — always update both when restructuring taxonomy
 - **`default_category` must be changed** before you can delete "Non classé"
 - **Author slugs can't be changed via REST API** — only display name, nickname, bio, email, URL
+- **`/wp/v2/plugins` returns 401 with Application Passwords** — cannot list, activate, or deactivate plugins via REST API. DELETE on plugins may silently fail even when list/activate works. Workaround: dequeue their frontend assets via a Code Snippet (see below).
+- **Code Snippets API PUT may silently skip `code` updates** — sending only `{"code":"...","active":true}` sometimes updates `active` but NOT `code`. Fix: fetch the full snippet object first, modify the `code` field, remove `id`/`network`/`shared_network` keys, then PUT the entire object back.
+- **`PREG_OFFSET_MATCH` crashes in Code Snippets on PHP 8.0** — `preg_match('/<h[2-6]/i', $str, $m, PREG_OFFSET_MATCH)` causes a fatal error inside Code Snippets on some PHP 8.0 hosts (OVHcloud). Use `strpos()` / `stripos()` as a safe replacement for simple pattern searches.
+- **`foreach` can crash in Code Snippets** — `foreach ($array as $match)` inside complex closures has caused fatal errors. Use `for ($i = 0; $i < count($array); $i++)` with index access as a reliable alternative.
+- **Yoast `wpseo_robots_array` filter unreliable for noindex override (v23+)** — The filter at any priority (20, 99) may not override Yoast's noindex. Direct DB modification works: `$opts = get_option('wpseo_titles'); $opts['noindex-tax-category'] = false; update_option('wpseo_titles', $opts);`
+- **Yoast sitemap cache must be cleared** — After changing taxonomy settings, call `WPSEO_Sitemaps_Cache::clear()` in the same snippet for changes to appear in sitemaps.
+- **Yoast fields via `register_rest_field` are top-level, not in `meta`** — When exposing Yoast fields with `register_rest_field('post', '_yoast_wpseo_focuskw', ...)`, they appear at the response root (e.g., `post._yoast_wpseo_focuskw`), NOT inside `post.meta`. Use `?_fields=_yoast_wpseo_focuskw` to fetch them. This differs from `register_post_meta` (used for Rank Math) which puts fields inside `meta`.
+- **Inject JSON-LD via `wp_footer`, not `wp_head`** — For schema that depends on post content (FAQ, TOC), `wp_footer` is safer because the post query is fully set up. Google accepts JSON-LD in `<body>`.
+- **OpenAI image API returns HTTP 400 for billing limits** — When the billing hard limit is reached, `gpt-image-1` and `dall-e-3` both return `HTTP 400 Bad Request`, not a clear billing error. Check the response body for "Billing hard limit has been reached".
+- **Rank Math can be installed but produce zero front-end output** — fields are populated in the DB (readable via REST API) but no meta description, OG tags, JSON-LD, canonical, or sitemap is rendered in HTML. Detect by checking: (1) no `rankmath/v1` in API namespaces at `/wp-json/`, (2) no `rank-math` string in HTML source, (3) `sitemap_index.xml` returns 404. When this happens, deploy a Code Snippet as SEO meta fallback (see references).
+- **WordPress core sitemap vs Rank Math sitemap** — when Rank Math doesn't generate its sitemap, WP uses `wp-sitemap.xml` (no `<lastmod>`, no image sitemaps, no priority). The `robots.txt` will reference this basic sitemap.
+- **Duplicate robots meta** — WP core outputs `<meta name='robots' content='max-image-preview:large' />`. If your snippet adds an enhanced robots tag, Google merges both directives. To fully remove the WP core one, you need BOTH: `remove_action('wp_head', 'wp_robots', 11);` AND `add_filter('wp_robots', '__return_empty_array', 99);` — the `remove_action` alone is not sufficient.
+- **Duplicate canonical tag** — WP core outputs its own `<link rel="canonical">` via `rel_canonical`. If your snippet outputs canonical, suppress the core one with `remove_action('wp_head', 'rel_canonical');`
+- **`<title>` tag override** — The SEO meta snippet controls OG/meta but the `<title>` tag is generated by WP's `wp_get_document_title()`. To inject the Rank Math title into `<title>`, use the `pre_get_document_title` filter (return a non-empty string to override completely).
+- **`llms.txt` via Code Snippet must use `parse_request` hook** — `template_redirect` returns 404 for URLs that don't match any WP route. Use `parse_request` which fires earlier and catches all requests. Check `$wp->request === 'llms.txt'`.
+- **Author archive redirect** — Since author slugs can't be changed via REST API, the clean fix is to redirect `/author/*` to `/a-propos/` via `template_redirect`: `if (is_author()) { wp_redirect(home_url('/a-propos/'), 301); exit; }`
+- **Category archive SEO** — Category pages need their own meta description (use category description), canonical, OG tags, and `CollectionPage` JSON-LD schema. Extend the SEO meta snippet to handle `is_category()`.
+- **Close comments via REST API** — Set `default_comment_status` and `default_ping_status` to `"closed"` via `/wp-json/wp/v2/settings`, then close existing posts individually with `{"comment_status":"closed","ping_status":"closed"}`.
+- **Browser cache headers via PHP snippet** — When `.htaccess` is not writable, use a Code Snippet hooking `send_headers` to set `Cache-Control: public, max-age=600, s-maxage=3600, stale-while-revalidate=86400` for non-logged-in users. Remove `Pragma` and `Expires` headers.
+- **Homepage OG image defaults to favicon** — WP falls back to the site icon (often 512px) as OG image. Always generate and upload a proper 1200x630 social sharing image.
+- **Legacy theme H1 fixes must be scoped** — If you demote header `site-title` from `<h1>`, scope it to singular templates (`is_single() || is_page()`) unless archives are explicitly handled. A global demotion can leave category archives with zero H1.
+- **Tags: nuclear option** — If all tags are AI-generated junk (English on a French site, all count=1, generic terms), delete them ALL — remove from posts first (`{"tags":[]}`), then delete each tag. Don't just clean zero-count ones.
+- **Image optimization fallback tooling** — If `imagemagick/cwebp/pngquant` are unavailable, use Python Pillow (`PIL`) to convert oversized featured PNGs to optimized JPEG/WebP, then upload through REST.
+- **Featured-media swap workflow** — For each post: download source image → optimize → upload new media → preserve/restore `alt_text` → set post `featured_media` to new media ID → verify rendered URLs (`-1038x576` derivatives included).
+- **Meta description length must be validated after rendering** — HTML entity encoding (`'` → `&#039;`, etc.) changes effective length in source; validate final rendered length, not only input string length.
+- **Prefer full snippet replacement over brittle string patching** — For large SEO snippets, update atomically (full code payload) instead of incremental text surgery to avoid escaped newline/quote corruption.
+- **French sites require legal pages** — "Mentions légales" (legally mandatory) and "Politique de confidentialité" (GDPR, required if any data is collected — even comment forms). Include these in the cleanup step.
 
 For full implementation details, API calls and PHP snippets, see [references/wordpress-seo-automation.md](references/wordpress-seo-automation.md)
 
