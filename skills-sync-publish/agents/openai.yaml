@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skills Sync Publish"
+  short_description: "Sync WSL/VPS skills and publish to GitHub"
+  default_prompt: "Synchronize the canonical WSL skills/env with myvps, then optionally publish the managed skills library to pm78/skills."

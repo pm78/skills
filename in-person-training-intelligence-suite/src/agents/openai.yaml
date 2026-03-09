@@ -1,0 +1,4 @@
+interface:
+  display_name: "In-Person Training Intelligence Suite"
+  short_description: "Design in-person training and generate full decks"
+  default_prompt: "Use this skill to produce delivery-ready in-person training content and generate a PPTX by default alongside markdown output."

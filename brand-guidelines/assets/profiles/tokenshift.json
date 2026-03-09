@@ -1,0 +1,192 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "tokenshift",
+  "brand_name": "TokenShift",
+  "aliases": [
+    "tokenshift",
+    "token-shift",
+    "tokenshift.com",
+    "tokenshift.fr"
+  ],
+  "captured_at": "2026-02-23T00:00:00+00:00",
+  "sources": [
+    {
+      "type": "preset",
+      "value": "TokenShift brand identity — rings-01 declination (Feb 2026)"
+    },
+    {
+      "type": "pptx",
+      "value": "/mnt/c/Users/pasca/TokenShift-Client-Deck-v3.pptx"
+    }
+  ],
+  "logos": [
+    {
+      "path": "/mnt/c/Users/pasca/TokenShift-Brand/rings-01-navy-cyan-geometric-sans.png",
+      "source": "primary-logo-horizontal"
+    },
+    {
+      "path": "/mnt/c/Users/pasca/TokenShift-Brand/icon-white.png",
+      "source": "icon-light-bg"
+    },
+    {
+      "path": "/mnt/c/Users/pasca/TokenShift-Brand/icon-dark.png",
+      "source": "icon-dark-bg"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#0F1B2D",
+      "count": 100,
+      "role": "primary-navy"
+    },
+    {
+      "hex": "#00B4D8",
+      "count": 80,
+      "role": "primary-cyan"
+    },
+    {
+      "hex": "#475569",
+      "count": 40,
+      "role": "slate-text"
+    },
+    {
+      "hex": "#FFFFFF",
+      "count": 60,
+      "role": "background"
+    },
+    {
+      "hex": "#F8FAFC",
+      "count": 30,
+      "role": "surface-light"
+    },
+    {
+      "hex": "#0E7490",
+      "count": 20,
+      "role": "cyan-dark"
+    },
+    {
+      "hex": "#1E293B",
+      "count": 15,
+      "role": "navy-medium"
+    },
+    {
+      "hex": "#CBD5E1",
+      "count": 10,
+      "role": "border-muted"
+    },
+    {
+      "hex": "#EF4444",
+      "count": 5,
+      "role": "accent-alert"
+    },
+    {
+      "hex": "#10B981",
+      "count": 5,
+      "role": "accent-success"
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Inter",
+      "count": 100
+    },
+    {
+      "name": "Helvetica Neue",
+      "count": 50
+    },
+    {
+      "name": "Arial",
+      "count": 10
+    }
+  ],
+  "css_style": {
+    "source_site": null,
+    "theme": "custom-tokenshift",
+    "tokens": {
+      "primary": "#0F1B2D",
+      "primary_accent": "#00B4D8",
+      "primary_accent_dark": "#0E7490",
+      "primary_accent_light": "#67E8F9",
+      "background": "#FFFFFF",
+      "surface": "#F8FAFC",
+      "surface_alt": "#F1F5F9",
+      "text_primary": "#0F1B2D",
+      "text_secondary": "#475569",
+      "text_muted": "#94A3B8",
+      "border": "#CBD5E1",
+      "border_light": "#E2E8F0",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444",
+      "info": "#00B4D8"
+    },
+    "typography": {
+      "heading_font": "Inter",
+      "body_font": "Inter",
+      "mono_font": "JetBrains Mono",
+      "fallback": "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      "heading_weight": "700",
+      "body_weight": "400",
+      "base_size": "16px",
+      "scale_ratio": "1.25"
+    },
+    "notable_rules": [
+      "Single-font system (Inter) with weight variation for hierarchy.",
+      "Midnight navy (#0F1B2D) as primary brand color and heading text color.",
+      "Cyan (#00B4D8) as primary accent — links, CTAs, active states, SHIFT text.",
+      "Clean white backgrounds with light slate surfaces for card/section contrast.",
+      "Border radius: 8px for cards, 6px for buttons, 4px for inputs.",
+      "Button primary: cyan bg, white text. Button secondary: navy outline.",
+      "No gradients — flat colors only, consistent with logo guidelines.",
+      "Dark mode: navy (#0F1B2D) bg, white text, cyan accents preserved."
+    ]
+  },
+  "illustration_style": {
+    "editorial_direction": "Enterprise AI transformation scenes — boardrooms, modern offices, teams collaborating with AI dashboards and workflows. Professional, forward-looking, implementation-focused.",
+    "rendering": "Photorealistic corporate photography, clean lighting, modern interiors, tech-forward but human-centered.",
+    "composition": "Balanced layouts with clear focal point, generous negative space, suitable for hero sections and cards.",
+    "mood": "Confident, progressive, professional, transformative — never defensive or compliance-heavy.",
+    "color_palette": [
+      "#0F1B2D",
+      "#00B4D8",
+      "#475569",
+      "#F8FAFC",
+      "#FFFFFF"
+    ],
+    "motifs": [
+      "teams collaborating around AI-powered dashboards",
+      "modern office with integrated technology",
+      "workflow diagrams and process transformation visuals",
+      "connected systems and integration metaphors",
+      "upward trajectories and forward motion"
+    ],
+    "avoid": [
+      "shields, locks, or compliance/audit imagery",
+      "defensive postures or fear-based messaging",
+      "robot/human conflict metaphors",
+      "generic stock photo handshakes",
+      "neon/cyberpunk aesthetics",
+      "watermarks, text overlays, logos in photos",
+      "cartoon or flat vector illustration style"
+    ]
+  },
+  "guidelines": [
+    {
+      "title": "TokenShift Brand Guidelines",
+      "url": "/mnt/c/Users/pasca/TokenShift-Brand/tokenshift-brand-guidelines.md"
+    }
+  ],
+  "policies": [],
+  "style_notes": [
+    "Brand tagline: 'From code to culture.'",
+    "Brand positioning: TokenShift helps enterprises move AI from pilots to production — redesigning workflows, upskilling teams, and embedding AI into daily operations with measurable ROI.",
+    "Logo: Linked Rings mark (two interlocking tilted ring outlines — navy + cyan) + TOKENSHIFT wordmark.",
+    "Wordmark split: TOKEN in navy (#0F1B2D), SHIFT in cyan (#00B4D8).",
+    "Never use gradients in the logo or brand mark.",
+    "Minimum clear space around logo: height of one ring.",
+    "Dark backgrounds: use white rings + white TOKEN, cyan SHIFT.",
+    "The rings symbolize integration — technology and people, tools and ways of working.",
+    "Tone of voice: Direct, expert, outcome-focused. We implement, we transform, we deliver.",
+    "PPTX template: /mnt/c/Users/pasca/TokenShift-Brand/tokenshift-template.pptx"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "presentation": {
+    "title": "TITLE",
+    "author": "AUTHOR",
+    "confidentiality": "INTERNAL",
+    "palette": {
+      "diagram": {
+        "fill": "BACKGROUND_1",
+        "line": "ACCENT_1",
+        "arrow": "ACCENT_1",
+        "text_primary": "TEXT_1",
+        "text_secondary": "TEXT_2"
+      },
+      "footer": {
+        "text": "TEXT_2",
+        "line": "ACCENT_1"
+      },
+      "image": {
+        "bg": "#FFFFFF",
+        "accent": "ACCENT_1",
+        "text": "TEXT_1"
+      }
+    },
+    "agenda": {
+      "enabled": true,
+      "title": "Agenda"
+    },
+    "footer": {
+      "enabled": true,
+      "include_on_title": false,
+      "show_page_number": true,
+      "show_total": false
+    },
+    "slides": [
+      {
+        "layout": "title",
+        "title": "TITLE",
+        "subtitle": "Subtitle"
+      },
+      {
+        "layout": "workflow",
+        "title": "Example workflow",
+        "steps": ["Step 1", "Step 2", "Step 3"]
+      },
+      {
+        "layout": "bullets",
+        "title": "Key claims",
+        "bullets": ["Claim 1 [1]", "Claim 2 [2]", "Claim 3 [3]"]
+      }
+    ]
+  }
+}
+

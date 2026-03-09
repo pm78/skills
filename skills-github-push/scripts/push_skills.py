@@ -50,12 +50,30 @@ def _normalize_repo(repo: str) -> str:
     return f"https://github.com/{repo}.git"
 
 
-def _discover_skills_dir(explicit: str | None) -> Path:
-    if explicit:
-        path = Path(explicit).expanduser().resolve()
-        if not path.is_dir():
-            raise SystemExit(f"--skills-dir is not a directory: {path}")
-        return path
+def _validate_dir(path_str: str, flag_name: str) -> Path:
+    path = Path(path_str).expanduser().resolve()
+    if not path.is_dir():
+        raise SystemExit(f"{flag_name} is not a directory: {path}")
+    return path
+
+
+def _discover_skill_roots(
+    explicit_skills_dir: str | None,
+    explicit_role_skills_dir: str | None,
+) -> tuple[Path, Path | None]:
+    if explicit_skills_dir:
+        shared_root = _validate_dir(explicit_skills_dir, "--skills-dir")
+        role_root = (
+            _validate_dir(explicit_role_skills_dir, "--role-skills-dir")
+            if explicit_role_skills_dir
+            else None
+        )
+        return shared_root, role_root
+
+    canonical_shared = Path.home() / ".agents" / "skills"
+    canonical_role = Path.home() / ".agents" / "role_skills"
+    if canonical_shared.is_dir():
+        return canonical_shared.resolve(), canonical_role.resolve() if canonical_role.is_dir() else None
 
     codex_home = os.environ.get("CODEX_HOME")
     candidates: list[Path] = []
@@ -67,17 +85,18 @@ def _discover_skills_dir(explicit: str | None) -> Path:
 
     for candidate in candidates:
         if candidate.is_dir():
-            return candidate
+            return candidate.resolve(), None
 
     raise SystemExit(
-        "Could not locate your Codex skills directory. "
-        "Set CODEX_HOME or pass --skills-dir explicitly."
+        "Could not locate your skills directory. "
+        "Pass --skills-dir explicitly if needed."
     )
 
 
 def _list_skill_entries(
     *,
     skills_dir: Path,
+    role_skills_dir: Path | None,
     include_hidden: bool,
     include_system: bool,
     only: list[str] | None,
@@ -87,6 +106,7 @@ def _list_skill_entries(
     exclude_set = set(exclude or [])
 
     entries: list[SkillEntry] = []
+    seen_names: dict[str, Path] = {}
 
     def maybe_add(src_dir: Path, rel_path: Path) -> None:
         if not src_dir.is_dir():
@@ -99,12 +119,27 @@ def _list_skill_entries(
             return
         if rel_path.name in exclude_set:
             return
+        existing = seen_names.get(rel_path.name)
+        if existing and existing != src_dir.resolve():
+            raise SystemExit(
+                f"Skill name collision for '{rel_path.name}': {existing} and {src_dir.resolve()}"
+            )
+        if existing == src_dir.resolve():
+            return
+        seen_names[rel_path.name] = src_dir.resolve()
         entries.append(SkillEntry(src_dir=src_dir, rel_path=rel_path))
 
     for child in sorted(skills_dir.iterdir()):
         if child.name.startswith("."):
             continue
         maybe_add(child, Path(child.name))
+
+    if role_skills_dir and role_skills_dir.is_dir():
+        for role_dir in sorted(role_skills_dir.iterdir()):
+            if not role_dir.is_dir():
+                continue
+            for child in sorted(role_dir.iterdir()):
+                maybe_add(child, Path(child.name))
 
     if include_system:
         system_root = skills_dir / ".system"
@@ -129,6 +164,32 @@ def _git_config_get(repo_dir: Path, key: str) -> str:
     return result.stdout.strip()
 
 
+def _copy_ignore(src_root: Path):
+    ignored_names = {
+        ".git",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".DS_Store",
+        "node_modules",
+    }
+
+    def _ignore(current_dir: str, names: list[str]) -> set[str]:
+        current_path = Path(current_dir)
+        ignored: set[str] = set()
+        for name in names:
+            if name in ignored_names or name.endswith(":Zone.Identifier") or name.endswith(".pyc"):
+                ignored.add(name)
+                continue
+            candidate = current_path / name
+            if candidate.is_symlink():
+                ignored.add(name)
+        return ignored
+
+    return _ignore
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Sync installed Codex skills to a GitHub repo (clone, copy, commit, push)."
@@ -141,7 +202,12 @@ def main() -> int:
     parser.add_argument(
         "--skills-dir",
         default=None,
-        help="Override the local skills directory. Defaults to $CODEX_HOME/skills then ~/.agent/skills then ~/.codex/skills.",
+        help="Override the local shared skills directory. Defaults to ~/.agents/skills, then legacy fallbacks.",
+    )
+    parser.add_argument(
+        "--role-skills-dir",
+        default=None,
+        help="Override the local role skills directory. Defaults to ~/.agents/role_skills when using the canonical layout.",
     )
     parser.add_argument(
         "--layout",
@@ -193,9 +259,10 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    skills_dir = _discover_skills_dir(args.skills_dir)
+    skills_dir, role_skills_dir = _discover_skill_roots(args.skills_dir, args.role_skills_dir)
     entries = _list_skill_entries(
         skills_dir=skills_dir,
+        role_skills_dir=role_skills_dir,
         include_hidden=args.include_hidden,
         include_system=args.include_system,
         only=args.only,
@@ -210,16 +277,6 @@ def main() -> int:
     commit_message = args.message or (
         "Sync Codex skills "
         + datetime.now(timezone.utc).strftime("(%Y-%m-%dT%H:%M:%SZ)")
-    )
-
-    ignore = shutil.ignore_patterns(
-        ".git",
-        "__pycache__",
-        "*.pyc",
-        ".pytest_cache",
-        ".mypy_cache",
-        ".DS_Store",
-        "node_modules",
     )
 
     with tempfile.TemporaryDirectory(prefix="codex-skills-github-push-") as tmp:
@@ -246,7 +303,12 @@ def main() -> int:
             if dest_dir.exists():
                 shutil.rmtree(dest_dir)
             dest_dir.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copytree(entry.src_dir, dest_dir, symlinks=True, ignore=ignore)
+            shutil.copytree(
+                entry.src_dir.resolve(),
+                dest_dir,
+                symlinks=False,
+                ignore=_copy_ignore(entry.src_dir.resolve()),
+            )
 
         _run(["git", "add", "-A"], cwd=clone_dir)
         status = _capture(["git", "status", "--porcelain"], cwd=clone_dir)

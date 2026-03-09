@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research to Draft (Coaching)"
+  short_description: "Search recent coaching-related sources, create sources in Notion, draft a written article, and notify reviewers by email."
+  default_prompt: "Use $research-to-draft-coaching to pull fresh sources (< 7 days), create Notion sources, draft one Written article, and send the draft link to reviewers. Default DB IDs are already configured for My Articles and Sources."

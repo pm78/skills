@@ -1,0 +1,4 @@
+interface:
+  display_name: "Source to Article/Newsletter"
+  short_description: "Draft posts from Notion Sources"
+  default_prompt: "Use $source-to-article-newsletter to turn Sources into a draft blog post or newsletter in My Articles."

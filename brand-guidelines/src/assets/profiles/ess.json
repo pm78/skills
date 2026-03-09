@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "ess",
+  "brand_name": "ESS",
+  "captured_at": "2026-02-18T16:17:13.375240+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://www.ess-compass.co.uk"
+    },
+    {
+      "type": "asset",
+      "value": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/ess-logo.png"
+    }
+  ],
+  "logos": [
+    {
+      "path": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/ess-logo.png",
+      "source": "skill-asset:primary-logo"
+    },
+    {
+      "url": "https://www.ess-compass.co.uk/media/2dbfpifd/compass-group-cropped.png?width=800&amp;height=800&amp;format=webP",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://www.ess-compass.co.uk/media/orffrgid/parent-logo.png?width=300&amp;height=300&amp;format=webP",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://www.ess-compass.co.uk/assets/img/fanatic-logo-white.svg",
+      "source": "img:logo-hint"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#2C6C7D",
+      "count": 2
+    },
+    {
+      "hex": "#0F1F27",
+      "count": 2
+    },
+    {
+      "hex": "#1E3F48",
+      "count": 2
+    },
+    {
+      "hex": "#180000",
+      "count": 2
+    },
+    {
+      "hex": "#271007",
+      "count": 2
+    },
+    {
+      "hex": "#6C8B8E",
+      "count": 2
+    },
+    {
+      "hex": "#FFAC45",
+      "count": 1
+    },
+    {
+      "hex": "#39CBEB",
+      "count": 1
+    },
+    {
+      "hex": "#45BB78",
+      "count": 1
+    },
+    {
+      "hex": "#AF2930",
+      "count": 1
+    }
+  ],
+  "fonts": [],
+  "guidelines": [],
+  "policies": [
+    {
+      "title": "Privacy Policy",
+      "url": "https://www.compass-group.co.uk/about/privacy-notice/"
+    },
+    {
+      "title": "Terms and Conditions",
+      "url": "https://www.compass-group.co.uk/about/terms-and-conditions/"
+    }
+  ],
+  "style_notes": [
+    "Preset generated from /tmp/ess.profile.json",
+    "Logo sourced from Compass Group UK&I brands page."
+  ]
+}

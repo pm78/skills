@@ -1,0 +1,4 @@
+interface:
+  display_name: "WordPress Style Director"
+  short_description: "Generate WordPress CSS from style, brand, or creative brief"
+  default_prompt: "Use $wordpress-style-director to generate WordPress-ready CSS from a reference site, brand guidelines, or a creative design brief."

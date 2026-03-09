@@ -1,0 +1,2 @@
+#!/usr/bin/env python3
+print("TODO: generate cashflow projection charts")

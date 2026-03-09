@@ -1,0 +1,157 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "lesnewsducoach",
+  "brand_name": "Les News du Coach",
+  "aliases": [
+    "les-news-du-coach",
+    "lesnewsducoach",
+    "lesnewsducoach.com",
+    "lesnewsducoach.fr",
+    "https://lesnewsducoach.com",
+    "https://lesnewsducoach.fr"
+  ],
+  "captured_at": "2026-02-19T11:20:00+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://lesnewsducoach.com"
+    },
+    {
+      "type": "style-transfer",
+      "value": "https://thrivethroughtime.com -> https://lesnewsducoach.com"
+    },
+    {
+      "type": "css",
+      "value": "ttt-lesnewsducoach-final-v7.css (nisarg parity pack)"
+    },
+    {
+      "type": "asset",
+      "value": "https://lesnewsducoach.com/wp-content/uploads/2026/02/favicon-512-solid.png"
+    },
+    {
+      "type": "asset",
+      "value": "https://lesnewsducoach.com/wp-content/uploads/2026/02/lesnewsducoach-header-bg-photo-2560x560-20260219.png"
+    }
+  ],
+  "logos": [
+    {
+      "url": "https://lesnewsducoach.com/wp-content/uploads/2026/02/favicon-512-solid.png",
+      "source": "site_icon"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#FAF9F6",
+      "count": 30
+    },
+    {
+      "hex": "#F3F0E8",
+      "count": 24
+    },
+    {
+      "hex": "#2D2926",
+      "count": 18
+    },
+    {
+      "hex": "#9E7C0C",
+      "count": 16
+    },
+    {
+      "hex": "#C5A55A",
+      "count": 14
+    },
+    {
+      "hex": "#7B6000",
+      "count": 12
+    },
+    {
+      "hex": "#8C8379",
+      "count": 8
+    },
+    {
+      "hex": "#1F2F57",
+      "count": 7
+    },
+    {
+      "hex": "#FFFFFF",
+      "count": 6
+    }
+  ],
+  "fonts": [
+    {
+      "name": "Cormorant Garamond",
+      "count": 14
+    },
+    {
+      "name": "Source Sans 3",
+      "count": 12
+    },
+    {
+      "name": "Arial",
+      "count": 2
+    }
+  ],
+  "css_style": {
+    "source_site": "https://thrivethroughtime.com",
+    "theme": "nisarg",
+    "tokens": {
+      "primary_accent": "#9E7C0C",
+      "secondary_accent": "#C5A55A",
+      "accent_dark": "#7B6000",
+      "background": "#FAF9F6",
+      "surface": "#F3F0E8",
+      "text_primary": "#2D2926",
+      "text_secondary": "#8C8379",
+      "border": "#E2DDD3",
+      "header_overlay": "#1F2F57"
+    },
+    "typography": {
+      "heading_font": "Cormorant Garamond",
+      "body_font": "Source Sans 3",
+      "fallback": "sans-serif"
+    },
+    "notable_rules": [
+      "Nisarg layout parity with thrivethroughtime.com baseline structure.",
+      "Warm premium editorial palette (gold + ivory neutrals) with deep blue photo accents.",
+      "Low-height full-width photorealistic header background (2560x560).",
+      "Content typography tuned for larger body/headings and tighter line-height.",
+      "Classic-theme WordPress compatibility via Code Snippets front-end injection."
+    ]
+  },
+  "illustration_style": {
+    "editorial_direction": "Business coaching editorial scenes in photorealistic style, premium and human-centered, aligned with Thrive Through Time mood.",
+    "rendering": "Photorealistic editorial photography look, natural light, soft depth of field, realistic skin tones, no synthetic cartoon rendering.",
+    "composition": "One clear human scene with secondary context, crop-safe for WordPress cards and wide headers, balanced negative space.",
+    "mood": "Trustworthy, practical, expert, optimistic, calm and publication-ready.",
+    "color_palette": [
+      "#1F2F57",
+      "#9E7C0C",
+      "#C5A55A",
+      "#FAF9F6",
+      "#F3F0E8",
+      "#2D2926"
+    ],
+    "motifs": [
+      "coach and client reviewing plans on laptop",
+      "small advisory group discussion around a table",
+      "financial planning and growth dashboard moments",
+      "human with subtle AI-assistant support context"
+    ],
+    "avoid": [
+      "cartoon or flat vector rendering",
+      "duplicated faces or lookalike twins",
+      "neon cyberpunk tones",
+      "visual clutter and dense collages",
+      "text overlays, logos or watermarks",
+      "fear-based or alarmist metaphors"
+    ]
+  },
+  "guidelines": [],
+  "policies": [],
+  "style_notes": [
+    "Style transferred from thrivethroughtime.com to lesnewsducoach.com via wordpress-style-director.",
+    "WordPress theme parity target: Nisarg.",
+    "Use gold accents on warm neutral backgrounds and deep blue cues for premium consistency.",
+    "Article visuals must be photorealistic, human-centered, and crop-safe for cards and headers."
+  ]
+}

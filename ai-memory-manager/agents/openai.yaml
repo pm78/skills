@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Memory Manager"
+  short_description: "Company and role memory routing"
+  default_prompt: "Read company memory plus role memory from AGENT_ROLE before substantial tasks, and route durable facts to the right layer."

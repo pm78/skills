@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "chartwells",
+  "brand_name": "Chartwells",
+  "captured_at": "2026-02-18T16:17:12.950580+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://www.chartwells.co.uk"
+    },
+    {
+      "type": "asset",
+      "value": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/chartwells-logo.png"
+    }
+  ],
+  "logos": [
+    {
+      "path": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/chartwells-logo.png",
+      "source": "skill-asset:primary-logo"
+    },
+    {
+      "url": "https://www.chartwells.co.uk/assets/images/socials/linkedin-logo.svg",
+      "source": "img:logo-hint"
+    },
+    {
+      "url": "https://www.chartwells.co.uk/assets/images/socials/x-logo.svg",
+      "source": "img:logo-hint"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#707070",
+      "count": 3
+    },
+    {
+      "hex": "#363541",
+      "count": 2
+    }
+  ],
+  "fonts": [],
+  "guidelines": [],
+  "policies": [
+    {
+      "title": "Privacy Policy",
+      "url": "https://www.compass-group.co.uk/about/privacy-notice/"
+    },
+    {
+      "title": "Privacy Policy",
+      "url": "https://policies.google.com/privacy"
+    },
+    {
+      "title": "Terms of Service",
+      "url": "https://policies.google.com/terms"
+    },
+    {
+      "title": "Cookie Policy",
+      "url": "https://www.compass-group.co.uk/cookie-policy/"
+    },
+    {
+      "title": "Privacy Policy",
+      "url": "https://www.compass-group.co.uk/privacy-notice/"
+    }
+  ],
+  "style_notes": [
+    "Preset generated from /tmp/chartwells.profile.json"
+  ]
+}

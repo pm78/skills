@@ -1,0 +1,4 @@
+interface:
+  display_name: "LinkedIn Search"
+  short_description: "Search LinkedIn via MCP tools"
+  default_prompt: "Use -search to search LinkedIn jobs and scrape a profile/company from a LinkedIn URL."

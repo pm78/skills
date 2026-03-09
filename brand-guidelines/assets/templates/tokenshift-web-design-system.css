@@ -1,0 +1,447 @@
+/* ============================================================
+   TokenShift Design System — CSS Custom Properties & Components
+   Version 1.0 — February 2026
+   "From code to culture."
+   ============================================================ */
+
+/* ----------------------------------------
+   1. Design Tokens (CSS Custom Properties)
+   ---------------------------------------- */
+
+:root {
+  /* --- Primary --- */
+  --ts-navy: #0F1B2D;
+  --ts-cyan: #00B4D8;
+
+  /* --- Secondary --- */
+  --ts-slate: #475569;
+  --ts-navy-medium: #1E293B;
+  --ts-cyan-dark: #0E7490;
+  --ts-cyan-light: #67E8F9;
+
+  /* --- Neutrals --- */
+  --ts-white: #FFFFFF;
+  --ts-snow: #F8FAFC;
+  --ts-surface: #F1F5F9;
+  --ts-border: #CBD5E1;
+  --ts-border-light: #E2E8F0;
+  --ts-muted: #94A3B8;
+
+  /* --- Semantic --- */
+  --ts-success: #10B981;
+  --ts-warning: #F59E0B;
+  --ts-error: #EF4444;
+  --ts-info: #00B4D8;
+
+  /* --- Typography --- */
+  --ts-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --ts-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --ts-font-weight-regular: 400;
+  --ts-font-weight-medium: 500;
+  --ts-font-weight-semibold: 600;
+  --ts-font-weight-bold: 700;
+
+  /* --- Type Scale (1.25 ratio) --- */
+  --ts-text-xs: 0.75rem;    /* 12px */
+  --ts-text-sm: 0.875rem;   /* 14px */
+  --ts-text-base: 1rem;     /* 16px */
+  --ts-text-lg: 1.25rem;    /* 20px */
+  --ts-text-xl: 1.5rem;     /* 24px */
+  --ts-text-2xl: 2rem;      /* 32px */
+  --ts-text-3xl: 2.25rem;   /* 36px */
+  --ts-text-4xl: 3rem;      /* 48px */
+
+  /* --- Line Heights --- */
+  --ts-leading-tight: 1.2;
+  --ts-leading-normal: 1.5;
+  --ts-leading-relaxed: 1.6;
+
+  /* --- Spacing (4px base) --- */
+  --ts-space-xs: 0.25rem;   /* 4px */
+  --ts-space-sm: 0.5rem;    /* 8px */
+  --ts-space-md: 1rem;      /* 16px */
+  --ts-space-lg: 1.5rem;    /* 24px */
+  --ts-space-xl: 2rem;      /* 32px */
+  --ts-space-2xl: 3rem;     /* 48px */
+  --ts-space-3xl: 4rem;     /* 64px */
+
+  /* --- Border Radius --- */
+  --ts-radius-sm: 4px;
+  --ts-radius-md: 6px;
+  --ts-radius-lg: 8px;
+  --ts-radius-full: 9999px;
+
+  /* --- Shadows --- */
+  --ts-shadow-sm: 0 1px 2px rgba(15, 27, 45, 0.05);
+  --ts-shadow-md: 0 4px 6px rgba(15, 27, 45, 0.07);
+  --ts-shadow-lg: 0 10px 15px rgba(15, 27, 45, 0.10);
+
+  /* --- Layout --- */
+  --ts-max-width: 80rem;    /* 1280px */
+  --ts-gutter: 1.5rem;      /* 24px */
+}
+
+/* ----------------------------------------
+   2. Dark Mode Tokens
+   ---------------------------------------- */
+
+[data-theme="dark"] {
+  --ts-white: #0F1B2D;
+  --ts-snow: #1E293B;
+  --ts-surface: #1E293B;
+  --ts-border: #334155;
+  --ts-border-light: #475569;
+  --ts-muted: #64748B;
+  --ts-slate: #CBD5E1;
+  --ts-navy: #F8FAFC;
+  --ts-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --ts-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --ts-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* ----------------------------------------
+   3. Base Reset & Typography
+   ---------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--ts-font-sans);
+  font-weight: var(--ts-font-weight-regular);
+  font-size: var(--ts-text-base);
+  line-height: var(--ts-leading-relaxed);
+  color: var(--ts-navy);
+  background-color: var(--ts-white);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--ts-font-weight-bold);
+  line-height: var(--ts-leading-tight);
+  color: var(--ts-navy);
+}
+
+h1 { font-size: var(--ts-text-4xl); margin-bottom: var(--ts-space-lg); }
+h2 { font-size: var(--ts-text-3xl); margin-bottom: var(--ts-space-md); }
+h3 { font-size: var(--ts-text-xl); margin-bottom: var(--ts-space-md); }
+h4 { font-size: var(--ts-text-lg); font-weight: var(--ts-font-weight-semibold); margin-bottom: var(--ts-space-sm); }
+
+p {
+  color: var(--ts-slate);
+  margin-bottom: var(--ts-space-md);
+}
+
+a {
+  color: var(--ts-cyan);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--ts-cyan-dark);
+}
+
+code {
+  font-family: var(--ts-font-mono);
+  font-size: 0.875em;
+  background: var(--ts-surface);
+  padding: 0.15em 0.4em;
+  border-radius: var(--ts-radius-sm);
+}
+
+/* ----------------------------------------
+   4. Layout
+   ---------------------------------------- */
+
+.ts-container {
+  max-width: var(--ts-max-width);
+  margin: 0 auto;
+  padding: 0 var(--ts-gutter);
+}
+
+.ts-section {
+  padding: var(--ts-space-3xl) 0;
+}
+
+.ts-section--alt {
+  background-color: var(--ts-snow);
+}
+
+.ts-grid {
+  display: grid;
+  gap: var(--ts-gutter);
+}
+
+.ts-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.ts-grid--3 { grid-template-columns: repeat(3, 1fr); }
+.ts-grid--4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 768px) {
+  .ts-grid--2,
+  .ts-grid--3,
+  .ts-grid--4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ----------------------------------------
+   5. Components
+   ---------------------------------------- */
+
+/* --- Buttons --- */
+
+.ts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ts-space-sm);
+  padding: 0.625rem 1.25rem;
+  font-family: var(--ts-font-sans);
+  font-size: var(--ts-text-sm);
+  font-weight: var(--ts-font-weight-semibold);
+  line-height: 1;
+  border-radius: var(--ts-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.ts-btn--primary {
+  background: var(--ts-cyan);
+  color: var(--ts-white);
+  border-color: var(--ts-cyan);
+}
+
+.ts-btn--primary:hover {
+  background: var(--ts-cyan-dark);
+  border-color: var(--ts-cyan-dark);
+}
+
+.ts-btn--secondary {
+  background: transparent;
+  color: var(--ts-navy);
+  border-color: var(--ts-navy);
+}
+
+.ts-btn--secondary:hover {
+  background: var(--ts-navy);
+  color: var(--ts-white);
+}
+
+.ts-btn--ghost {
+  background: transparent;
+  color: var(--ts-cyan);
+  border-color: transparent;
+}
+
+.ts-btn--ghost:hover {
+  background: var(--ts-surface);
+}
+
+.ts-btn--sm {
+  padding: 0.5rem 1rem;
+  font-size: var(--ts-text-xs);
+}
+
+.ts-btn--lg {
+  padding: 0.75rem 1.5rem;
+  font-size: var(--ts-text-base);
+}
+
+/* --- Cards --- */
+
+.ts-card {
+  background: var(--ts-white);
+  border: 1px solid var(--ts-border-light);
+  border-radius: var(--ts-radius-lg);
+  padding: var(--ts-space-lg);
+  transition: box-shadow 0.2s ease;
+}
+
+.ts-card:hover {
+  box-shadow: var(--ts-shadow-md);
+}
+
+.ts-card__title {
+  font-size: var(--ts-text-lg);
+  font-weight: var(--ts-font-weight-semibold);
+  color: var(--ts-navy);
+  margin-bottom: var(--ts-space-sm);
+}
+
+.ts-card__body {
+  color: var(--ts-slate);
+  font-size: var(--ts-text-sm);
+}
+
+/* --- Badge / Tag --- */
+
+.ts-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  font-size: var(--ts-text-xs);
+  font-weight: var(--ts-font-weight-medium);
+  border-radius: var(--ts-radius-sm);
+  background: var(--ts-surface);
+  color: var(--ts-slate);
+}
+
+.ts-badge--cyan {
+  background: rgba(0, 180, 216, 0.1);
+  color: var(--ts-cyan-dark);
+}
+
+.ts-badge--success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+/* --- Navigation --- */
+
+.ts-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ts-space-md) var(--ts-gutter);
+  background: var(--ts-navy);
+  color: var(--ts-white);
+}
+
+.ts-nav__logo {
+  height: 32px;
+  width: auto;
+}
+
+.ts-nav__links {
+  display: flex;
+  gap: var(--ts-space-xl);
+  list-style: none;
+}
+
+.ts-nav__links a {
+  color: var(--ts-muted);
+  font-size: var(--ts-text-sm);
+  font-weight: var(--ts-font-weight-medium);
+  transition: color 0.2s ease;
+}
+
+.ts-nav__links a:hover,
+.ts-nav__links a.active {
+  color: var(--ts-white);
+}
+
+/* --- Hero Section --- */
+
+.ts-hero {
+  background: var(--ts-navy);
+  color: var(--ts-white);
+  padding: var(--ts-space-3xl) 0;
+  text-align: center;
+}
+
+.ts-hero h1 {
+  color: var(--ts-white);
+  margin-bottom: var(--ts-space-md);
+}
+
+.ts-hero h1 span {
+  color: var(--ts-cyan);
+}
+
+.ts-hero p {
+  color: var(--ts-muted);
+  font-size: var(--ts-text-lg);
+  max-width: 40rem;
+  margin: 0 auto var(--ts-space-xl);
+}
+
+/* --- Footer --- */
+
+.ts-footer {
+  background: var(--ts-navy-medium);
+  color: var(--ts-muted);
+  padding: var(--ts-space-2xl) 0;
+  font-size: var(--ts-text-sm);
+}
+
+.ts-footer a {
+  color: var(--ts-muted);
+}
+
+.ts-footer a:hover {
+  color: var(--ts-cyan);
+}
+
+/* --- Stat Callout --- */
+
+.ts-stat {
+  text-align: center;
+}
+
+.ts-stat__number {
+  font-size: var(--ts-text-4xl);
+  font-weight: var(--ts-font-weight-bold);
+  color: var(--ts-cyan);
+  line-height: 1;
+}
+
+.ts-stat__label {
+  font-size: var(--ts-text-sm);
+  color: var(--ts-slate);
+  margin-top: var(--ts-space-xs);
+}
+
+/* --- Divider --- */
+
+.ts-divider {
+  border: none;
+  height: 1px;
+  background: var(--ts-border-light);
+  margin: var(--ts-space-xl) 0;
+}
+
+/* --- Overline Label --- */
+
+.ts-overline {
+  font-size: var(--ts-text-xs);
+  font-weight: var(--ts-font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ts-cyan);
+}
+
+/* --- Input --- */
+
+.ts-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-family: var(--ts-font-sans);
+  font-size: var(--ts-text-sm);
+  color: var(--ts-navy);
+  background: var(--ts-white);
+  border: 1px solid var(--ts-border);
+  border-radius: var(--ts-radius-sm);
+  transition: border-color 0.2s ease;
+}
+
+.ts-input:focus {
+  outline: none;
+  border-color: var(--ts-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.15);
+}
+
+.ts-input::placeholder {
+  color: var(--ts-muted);
+}

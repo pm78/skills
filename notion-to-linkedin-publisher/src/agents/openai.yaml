@@ -1,0 +1,4 @@
+interface:
+  display_name: "Notion to LinkedIn"
+  short_description: "Publish latest Notion article to LinkedIn"
+  default_prompt: "Use $notion-to-linkedin-publisher to publish the latest eligible My Articles entry to LinkedIn and sync status/platform fields in Notion."

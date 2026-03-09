@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "brand_id": "bon-appetit-management-company",
+  "brand_name": "Bon Appetit Management Company",
+  "captured_at": "2026-02-18T16:17:14.432529+00:00",
+  "sources": [
+    {
+      "type": "web",
+      "value": "https://www.bamco.com"
+    },
+    {
+      "type": "asset",
+      "value": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/bon-appetit-management-company-logo.png"
+    }
+  ],
+  "logos": [
+    {
+      "path": "/home/pascal/.agent/skills/brand-guidelines/assets/logos/bon-appetit-management-company-logo.png",
+      "source": "skill-asset:primary-logo"
+    },
+    {
+      "url": "https://www.bamco.com/wp-content/themes/edesign/webroot/images/og-bon-appetit.png",
+      "source": "meta:og:image"
+    },
+    {
+      "url": "https://www.bamco.com/wp-content/themes/edesign/webroot/images/icon/mobile-menu-back.svg",
+      "source": "img:logo-hint"
+    }
+  ],
+  "colors": [
+    {
+      "hex": "#AADA7B",
+      "count": 3
+    },
+    {
+      "hex": "#32373C",
+      "count": 2
+    },
+    {
+      "hex": "#F5F5F5",
+      "count": 2
+    },
+    {
+      "hex": "#000000",
+      "count": 1
+    },
+    {
+      "hex": "#ABB8C3",
+      "count": 1
+    },
+    {
+      "hex": "#FFFFFF",
+      "count": 1
+    },
+    {
+      "hex": "#F78DA7",
+      "count": 1
+    },
+    {
+      "hex": "#CF2E2E",
+      "count": 1
+    },
+    {
+      "hex": "#FF6900",
+      "count": 1
+    },
+    {
+      "hex": "#FCB900",
+      "count": 1
+    }
+  ],
+  "fonts": [],
+  "guidelines": [],
+  "policies": [
+    {
+      "title": "Privacy Policy",
+      "url": "https://www.bamco.com/privacy-policy/"
+    },
+    {
+      "title": "Terms of Use",
+      "url": "https://www.bamco.com/terms-of-use/"
+    }
+  ],
+  "style_notes": [
+    "Preset generated from /tmp/bon-appetit.profile.json"
+  ]
+}

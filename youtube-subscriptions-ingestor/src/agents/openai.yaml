@@ -1,0 +1,4 @@
+interface:
+  display_name: "YouTube Subscriptions Ingestor"
+  short_description: "Daily YouTube ingest to Notion Sources"
+  default_prompt: "Use $youtube-subscriptions-ingestor to scan my subscriptions, extract transcripts/key messages, and store new videos in Sources."

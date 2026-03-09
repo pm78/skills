@@ -1,0 +1,4 @@
+interface:
+  display_name: "Multi-Source Discovery"
+  short_description: "Discover and rank source content daily"
+  default_prompt: "Use $multi-source-discovery to search my tracked sources by keywords and store the most relevant items in Sources."
